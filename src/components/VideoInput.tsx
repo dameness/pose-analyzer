@@ -68,14 +68,123 @@ function LivePreview({ streamRef }: { streamRef: React.RefObject<MediaStream | n
   );
 }
 
-function RecordMode(_props: {
+function RecordMode({
+  recorder,
+  onVideoReady,
+  disabled,
+}: {
   recorder: ReturnType<typeof useVideoRecorder>;
   onVideoReady: (file: File) => void;
   disabled: boolean;
 }) {
+  const { state, startRecording, stopRecording, reset, streamRef } = recorder;
+  const [elapsed, setElapsed] = useState(0);
+  const elapsedRef = useRef<ReturnType<typeof setInterval> | null>(null);
+
+  useEffect(() => {
+    if (state.status === 'recording') {
+      setElapsed(0);
+      elapsedRef.current = setInterval(() => setElapsed(s => s + 1), 1000);
+    } else {
+      if (elapsedRef.current) {
+        clearInterval(elapsedRef.current);
+        elapsedRef.current = null;
+      }
+    }
+    return () => {
+      if (elapsedRef.current) {
+        clearInterval(elapsedRef.current);
+        elapsedRef.current = null;
+      }
+    };
+  }, [state.status]);
+
+  function handleConfirm() {
+    if (!state.videoBlob) return;
+    const file = new File([state.videoBlob], 'video.webm', { type: 'video/webm' });
+    onVideoReady(file);
+  }
+
+  function formatTime(seconds: number): string {
+    const m = String(Math.floor(seconds / 60)).padStart(2, '0');
+    const s = String(seconds % 60).padStart(2, '0');
+    return `${m}:${s}`;
+  }
+
+  if (state.status === 'idle') {
+    return (
+      <div className="flex flex-col items-center gap-4 py-8 px-4 bg-gray-900 rounded-2xl">
+        <p className="text-sm text-gray-400 text-center">
+          Posicione-se de modo que seu corpo inteiro fique visível na câmera.
+        </p>
+        {state.error && (
+          <p className="text-sm text-red-400 text-center">{state.error}</p>
+        )}
+        <button
+          type="button"
+          onClick={startRecording}
+          disabled={disabled}
+          className="flex items-center gap-2 px-6 py-3 bg-indigo-600 text-white rounded-xl font-semibold text-sm hover:bg-indigo-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer"
+        >
+          Iniciar gravação
+        </button>
+      </div>
+    );
+  }
+
+  if (state.status === 'recording') {
+    return (
+      <div className="flex flex-col items-center gap-3 bg-gray-900 rounded-2xl overflow-hidden">
+        <LivePreview streamRef={streamRef} />
+        <div className="flex flex-col items-center gap-3 pb-4">
+          <span className="text-white font-mono text-sm">
+            {formatTime(elapsed)} / 00:30
+          </span>
+          <button
+            type="button"
+            onClick={stopRecording}
+            disabled={disabled}
+            className="w-14 h-14 rounded-full bg-red-500 hover:bg-red-600 flex items-center justify-center transition-colors disabled:opacity-50 cursor-pointer"
+            aria-label="Parar gravação"
+          >
+            <span className="w-5 h-5 rounded-sm bg-white" />
+          </button>
+        </div>
+      </div>
+    );
+  }
+
+  // status === 'stopped'
   return (
-    <div className="h-48 bg-gray-100 dark:bg-gray-800 rounded-2xl flex items-center justify-center text-gray-400">
-      Gravar (em breve)
+    <div className="flex flex-col gap-3">
+      {state.videoUrl && (
+        <video
+          src={state.videoUrl}
+          controls
+          className="w-full rounded-2xl bg-gray-900 max-h-72"
+        />
+      )}
+      {state.error && (
+        <p className="text-sm text-red-500">{state.error}</p>
+      )}
+      <div className="flex gap-3">
+        <button
+          type="button"
+          onClick={reset}
+          disabled={disabled}
+          className="flex-1 py-3 rounded-xl border-2 border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 font-semibold text-sm hover:border-gray-400 transition-colors disabled:opacity-50 cursor-pointer"
+        >
+          ↩ Regravar
+        </button>
+        <button
+          type="button"
+          onClick={handleConfirm}
+          disabled={disabled || !state.videoBlob}
+          className="flex-1 py-3 rounded-xl bg-indigo-600 text-white font-semibold text-sm hover:bg-indigo-700 transition-colors disabled:opacity-50 cursor-pointer"
+        >
+          Analisar →
+        </button>
+      </div>
     </div>
   );
 }
