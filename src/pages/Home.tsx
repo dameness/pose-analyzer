@@ -116,7 +116,7 @@ export function Home() {
             disabled={!(selectedExercise !== null && step === 'select' && analysis.state.phase === 'idle')}
             className={[
               'transition-colors',
-              analysis.state.phase !== 'idle'
+              analysis.state.phase !== 'idle' && analysis.state.phase !== 'error'
                 ? 'text-gray-400 dark:text-gray-500'
                 : step === 'video'
                   ? 'font-medium text-gray-700 dark:text-gray-300'
