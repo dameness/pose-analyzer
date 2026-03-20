@@ -98,7 +98,7 @@ export function Home() {
             disabled={!(selectedExercise !== null && step === 'select' && analysis.state.phase === 'idle')}
             className={[
               'flex items-center justify-center w-6 h-6 rounded-full text-xs font-semibold shrink-0 transition-colors',
-              analysis.state.phase !== 'idle'
+              analysis.state.phase !== 'idle' && analysis.state.phase !== 'error'
                 ? 'bg-green-500 text-white'
                 : step === 'video'
                   ? 'bg-indigo-600 text-white'
@@ -108,7 +108,7 @@ export function Home() {
                 : 'cursor-default',
             ].join(' ')}
           >
-            {analysis.state.phase !== 'idle' ? <Check className="w-3 h-3" /> : '2'}
+            {analysis.state.phase !== 'idle' && analysis.state.phase !== 'error' ? <Check className="w-3 h-3" /> : '2'}
           </button>
           <button
             type="button"
@@ -230,7 +230,6 @@ export function Home() {
         {analysis.state.phase === 'done' && analysis.state.result !== null && (
           <AnalysisResult
             result={analysis.state.result}
-            exercise={selectedExercise!}
             onReset={handleReset}
           />
         )}

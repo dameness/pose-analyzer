@@ -60,7 +60,6 @@ export interface AnalysisStatusProps {
 
 export interface AnalysisResultProps {
   result: AnalysisResult;
-  exercise: ExerciseType;
   onReset: () => void;
 }
 
