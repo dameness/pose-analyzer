@@ -104,7 +104,9 @@ function RecordMode({
 
   function handleConfirm() {
     if (!state.videoBlob) return;
-    const file = new File([state.videoBlob], 'video.webm', { type: 'video/webm' });
+    const type = state.videoBlob.type || 'video/webm';
+    const ext = type.includes('mp4') ? 'mp4' : 'webm';
+    const file = new File([state.videoBlob], `video.${ext}`, { type });
     onVideoReady(file);
   }
 

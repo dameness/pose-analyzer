@@ -1,6 +1,16 @@
 import { useState, useRef, useEffect } from 'react';
 import type { VideoRecorderState } from '../types';
 
+function getSupportedMimeType(): string {
+  const candidates = ['video/mp4', 'video/webm;codecs=vp9', 'video/webm'];
+  for (const type of candidates) {
+    if (typeof MediaRecorder !== 'undefined' && MediaRecorder.isTypeSupported(type)) {
+      return type;
+    }
+  }
+  return '';
+}
+
 const INITIAL_STATE: VideoRecorderState = {
   status: 'idle',
   videoBlob: null,
@@ -48,6 +58,14 @@ export function useVideoRecorder(): {
     chunksRef.current = [];
     setState({ status: 'idle', videoBlob: null, videoUrl: null, error: null });
 
+    if (!navigator.mediaDevices?.getUserMedia) {
+      setState(prev => ({
+        ...prev,
+        error: 'Câmera não disponível. Acesse via HTTPS ou use um navegador compatível.',
+      }));
+      return;
+    }
+
     let stream: MediaStream;
     try {
       stream = await navigator.mediaDevices.getUserMedia({ video: true, audio: false });
@@ -57,13 +75,16 @@ export function useVideoRecorder(): {
           ? 'Permissão para câmera negada. Verifique as configurações do navegador.'
           : err instanceof DOMException && err.name === 'NotFoundError'
           ? 'Nenhuma câmera encontrada neste dispositivo.'
+          : err instanceof DOMException && err.name === 'NotSupportedError'
+          ? 'Câmera não suportada neste navegador. Tente usar Safari ou Chrome.'
           : 'Não foi possível acessar a câmera.';
       setState(prev => ({ ...prev, error: message }));
       return;
     }
 
     streamRef.current = stream;
-    const recorder = new MediaRecorder(stream, { mimeType: 'video/webm' });
+    const mimeType = getSupportedMimeType();
+    const recorder = new MediaRecorder(stream, mimeType ? { mimeType } : {});
     mediaRecorderRef.current = recorder;
 
     recorder.ondataavailable = (e) => {
@@ -72,7 +93,7 @@ export function useVideoRecorder(): {
 
     recorder.onstop = () => {
       if (mediaRecorderRef.current === null) return; // detached by cleanup — skip to avoid leak
-      const blob = new Blob(chunksRef.current, { type: 'video/webm' });
+      const blob = new Blob(chunksRef.current, { type: mimeType || 'video/webm' });
       const url = URL.createObjectURL(blob);
       urlRef.current = url;
       if (streamRef.current) {
