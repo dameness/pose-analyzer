@@ -1,4 +1,5 @@
 import { useState, useRef, useEffect } from 'react';
+import { Video, Upload } from 'lucide-react';
 import type { VideoInputProps } from '../types';
 import { useVideoRecorder } from '../hooks/useVideoRecorder';
 
@@ -32,7 +33,7 @@ export function VideoInput({ onVideoReady, disabled = false }: VideoInputProps) 
               disabled ? 'cursor-not-allowed opacity-50' : 'cursor-pointer',
             ].join(' ')}
           >
-            {m === 'record' ? '📷 Gravar' : '📁 Upload'}
+            {m === 'record' ? <><Video className="w-4 h-4" /> Gravar</> : <><Upload className="w-4 h-4" /> Upload</>}
           </button>
         ))}
       </div>
@@ -55,7 +56,7 @@ function LivePreview({ streamRef }: { streamRef: React.RefObject<MediaStream | n
     if (videoRef.current && streamRef.current) {
       videoRef.current.srcObject = streamRef.current;
     }
-  });
+  }, []);
   return (
     <video
       ref={videoRef}
