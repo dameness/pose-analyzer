@@ -11,6 +11,9 @@ export function VideoInput({ onVideoReady, disabled = false }: VideoInputProps) 
 
   function handleModeChange(next: InputMode) {
     if (next === mode) return;
+    if (mode === 'record' && recorder.state.status === 'recording') {
+      recorder.stopRecording();
+    }
     setMode(next);
   }
 
