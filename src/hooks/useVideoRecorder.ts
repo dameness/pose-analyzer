@@ -29,6 +29,7 @@ export function useVideoRecorder(): {
     }
     if (mediaRecorderRef.current && mediaRecorderRef.current.state !== 'inactive') {
       mediaRecorderRef.current.stop();
+      mediaRecorderRef.current = null; // detach before onstop fires
     }
     if (streamRef.current) {
       streamRef.current.getTracks().forEach(t => t.stop());
@@ -70,6 +71,7 @@ export function useVideoRecorder(): {
     };
 
     recorder.onstop = () => {
+      if (mediaRecorderRef.current === null) return; // detached by cleanup — skip to avoid leak
       const blob = new Blob(chunksRef.current, { type: 'video/webm' });
       const url = URL.createObjectURL(blob);
       urlRef.current = url;
