@@ -72,7 +72,7 @@ export function useVideoRecorder(): {
   startRecording: () => Promise<void>;
   stopRecording: () => void;
   reset: () => void;
-  streamRef: React.MutableRefObject<MediaStream | null>;
+  streamRef: React.RefObject<MediaStream | null>;
 } {
   const [state, setState] = useState<VideoRecorderState>(INITIAL_STATE);
   const mediaRecorderRef = useRef<MediaRecorder | null>(null);
@@ -241,7 +241,7 @@ export function VideoInput({ onVideoReady, disabled = false }: VideoInputProps) 
 
 // Sub-components defined below — implemented in Tasks 3 & 4
 
-function LivePreview({ streamRef }: { streamRef: React.MutableRefObject<MediaStream | null> }) {
+function LivePreview({ streamRef }: { streamRef: React.RefObject<MediaStream | null> }) {
   const videoRef = useRef<HTMLVideoElement>(null);
   useEffect(() => {
     if (videoRef.current && streamRef.current) {
