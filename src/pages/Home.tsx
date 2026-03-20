@@ -5,6 +5,12 @@ import { VideoInput } from '../components/VideoInput';
 import { useAnalysis } from '../hooks/useAnalysis';
 import type { ExerciseType } from '../types';
 
+const EXERCISE_LABELS: Record<ExerciseType, string> = {
+  squat: 'Agachamento',
+  situp: 'Abdominal',
+  pushup: 'Flexão',
+};
+
 export function Home() {
   const [selectedExercise, setSelectedExercise] = useState<ExerciseType | null>(null);
   const [step, setStep] = useState<'select' | 'video'>('select');
@@ -21,6 +27,7 @@ export function Home() {
   }
 
   function handleBack() {
+    analysis.reset();
     setStep('select');
   }
 
@@ -132,8 +139,8 @@ export function Home() {
               </h2>
               <p className="text-gray-500 dark:text-gray-400">
                 Exercício selecionado:{' '}
-                <span className="font-medium text-indigo-600 dark:text-indigo-400 capitalize">
-                  {selectedExercise}
+                <span className="font-medium text-indigo-600 dark:text-indigo-400">
+                  {EXERCISE_LABELS[selectedExercise]}
                 </span>
               </p>
             </div>
