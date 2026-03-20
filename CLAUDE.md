@@ -1,6 +1,7 @@
 # Pose Analyzer — TCC Bernardo Damiani
 
 ## Visão geral do projeto
+
 Interface web para análise postural de exercícios físicos usando IA.
 O usuário seleciona um exercício, grava ou faz upload de um vídeo, e recebe
 feedback visual sobre a execução — indicando quais articulações estão corretas
@@ -13,7 +14,7 @@ Instituto Federal Sul-rio-grandense, Câmpus Passo Fundo.
 
 ## Stack
 
-- React 18 + TypeScript
+- React 19 + TypeScript
 - Vite (bundler)
 - Tailwind CSS (estilização — sem componentes de UI externos)
 - Fetch nativo (sem axios)
@@ -39,23 +40,26 @@ Nunca hardcodar a URL no código — sempre usar `import.meta.env.VITE_API_URL`.
 ## Exercícios suportados
 
 | Valor enviado à API | Rótulo exibido ao usuário |
-|---------------------|--------------------------|
-| `squat`             | Agachamento              |
-| `situp`             | Abdominal                |
-| `pushup`            | Flexão                   |
+| ------------------- | ------------------------- |
+| `squat`             | Agachamento               |
+| `situp`             | Abdominal                 |
+| `pushup`            | Flexão                    |
 
 ---
 
 ## Contrato da API
 
 ### POST /analyze
+
 Envia o vídeo para processamento. Retorna imediatamente sem esperar a análise.
 
 **Request:** `multipart/form-data`
+
 - `video` — arquivo de vídeo (mp4 ou webm)
 - `exercise` — `"squat"` | `"situp"` | `"pushup"`
 
 **Response:**
+
 ```json
 {
   "job_id": "uuid-string",
@@ -66,14 +70,17 @@ Envia o vídeo para processamento. Retorna imediatamente sem esperar a análise.
 ---
 
 ### GET /status/:job_id
+
 Consultado via polling a cada 2 segundos até `status === "done"`.
 
 **Response — em processamento:**
+
 ```json
 { "status": "processing" }
 ```
 
 **Response — concluído:**
+
 ```json
 {
   "status": "done",
@@ -93,6 +100,7 @@ Consultado via polling a cada 2 segundos até `status === "done"`.
 ```
 
 **Response — erro:**
+
 ```json
 { "status": "error", "result": "mensagem de erro" }
 ```
@@ -163,6 +171,7 @@ desenvolvimento da UI sem o back-end rodando.
 **Feedback por articulação** — o componente JointFeedback recebe o nome da
 articulação e um booleano `correct`, exibindo verde ou vermelho com ícone.
 As articulações variam por exercício:
+
 - squat: joelho, quadril, tornozelo
 - situp: quadril, coluna
 - pushup: cotovelo, ombro, quadril
