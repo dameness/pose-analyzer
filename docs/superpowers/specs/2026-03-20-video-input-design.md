@@ -87,7 +87,7 @@ Toggle pill at the top switches between two modes. Below it, the content area ch
 | Recording State | What's shown |
 |---|---|
 | `idle` | Dark placeholder area + "Iniciar gravação" button + positioning tip |
-| `recording` | Live camera preview (`<video srcObject>`) + countdown timer + red stop button |
+| `recording` | Live camera preview (`<video srcObject>`) + numeric countdown timer (`00:23` format, counting up to 00:30) + red stop button |
 | `stopped` | Recorded video preview (`<video src={videoUrl}>`) + "Regravar" button + "Analisar →" button |
 
 When "Analisar →" is clicked: creates a `File` from the `videoBlob` (`video.webm`) and calls `onVideoReady(file)`.
@@ -125,11 +125,15 @@ Add local state: `step: 'select' | 'video'`
 
 Clicking "Continuar" on step 1 sets `step = 'video'`.
 
+### Back Navigation
+
+Step 2 shows a "← Voltar" button that sets `step = 'select'`. Going back does **not** discard the recorded/uploaded video — the `useVideoRecorder` state is preserved. The video is only discarded when the user explicitly clicks "Regravar" or "Trocar arquivo".
+
 ### Rendering
 
 ```
 step === 'select'  →  ExerciseSelector + Continuar button
-step === 'video'   →  VideoInput with onVideoReady handler
+step === 'video'   →  Voltar button + VideoInput with onVideoReady handler
 ```
 
 The `onVideoReady` handler calls `analysis.submit(file, selectedExercise)`.
