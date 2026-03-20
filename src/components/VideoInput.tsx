@@ -56,7 +56,7 @@ function LivePreview({ streamRef }: { streamRef: React.RefObject<MediaStream | n
     if (videoRef.current && streamRef.current) {
       videoRef.current.srcObject = streamRef.current;
     }
-  }, []);
+  });
   return (
     <video
       ref={videoRef}
