@@ -197,8 +197,9 @@ function UploadMode({
   disabled: boolean;
 }) {
   const [file, setFile] = useState<File | null>(null);
-  const [dragOver, setDragOver] = useState(false);
+  const [dragCounter, setDragCounter] = useState(0);
   const inputRef = useRef<HTMLInputElement>(null);
+  const dragOver = dragCounter > 0;
 
   function handleFile(f: File) {
     if (!f.type.startsWith('video/')) return;
@@ -207,7 +208,7 @@ function UploadMode({
 
   function handleDrop(e: React.DragEvent) {
     e.preventDefault();
-    setDragOver(false);
+    setDragCounter(0);
     const dropped = e.dataTransfer.files[0];
     if (dropped) handleFile(dropped);
   }
@@ -239,8 +240,9 @@ function UploadMode({
   if (!file) {
     return (
       <div
-        onDragOver={(e) => { e.preventDefault(); setDragOver(true); }}
-        onDragLeave={() => setDragOver(false)}
+        onDragEnter={(e) => { e.preventDefault(); setDragCounter(c => c + 1); }}
+        onDragOver={(e) => e.preventDefault()}
+        onDragLeave={() => setDragCounter(c => c - 1)}
         onDrop={handleDrop}
         onClick={() => !disabled && inputRef.current?.click()}
         className={[
@@ -277,7 +279,7 @@ function UploadMode({
       <div className="flex gap-3">
         <button
           type="button"
-          onClick={() => { setFile(null); inputRef.current?.click(); }}
+          onClick={() => setFile(null)}
           disabled={disabled}
           className="flex-1 py-3 rounded-xl border-2 border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 font-semibold text-sm hover:border-gray-400 transition-colors disabled:opacity-50 cursor-pointer"
         >
