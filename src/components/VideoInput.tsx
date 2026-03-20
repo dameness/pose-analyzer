@@ -189,13 +189,109 @@ function RecordMode({
   );
 }
 
-function UploadMode(_props: {
+function UploadMode({
+  onVideoReady,
+  disabled,
+}: {
   onVideoReady: (file: File) => void;
   disabled: boolean;
 }) {
+  const [file, setFile] = useState<File | null>(null);
+  const [dragOver, setDragOver] = useState(false);
+  const inputRef = useRef<HTMLInputElement>(null);
+
+  function handleFile(f: File) {
+    if (!f.type.startsWith('video/')) return;
+    setFile(f);
+  }
+
+  function handleDrop(e: React.DragEvent) {
+    e.preventDefault();
+    setDragOver(false);
+    const dropped = e.dataTransfer.files[0];
+    if (dropped) handleFile(dropped);
+  }
+
+  function handleChange(e: React.ChangeEvent<HTMLInputElement>) {
+    const picked = e.target.files?.[0];
+    if (picked) handleFile(picked);
+    // reset input value so same file can be re-selected after "Trocar"
+    e.target.value = '';
+  }
+
+  function formatSize(bytes: number): string {
+    if (bytes < 1_000_000) return `${(bytes / 1_000).toFixed(0)} KB`;
+    return `${(bytes / 1_000_000).toFixed(1)} MB`;
+  }
+
+  // Single hidden input used for both dropzone click and "Trocar arquivo"
+  const hiddenInput = (
+    <input
+      ref={inputRef}
+      type="file"
+      accept="video/mp4,video/webm"
+      className="hidden"
+      onChange={handleChange}
+      disabled={disabled}
+    />
+  );
+
+  if (!file) {
+    return (
+      <div
+        onDragOver={(e) => { e.preventDefault(); setDragOver(true); }}
+        onDragLeave={() => setDragOver(false)}
+        onDrop={handleDrop}
+        onClick={() => !disabled && inputRef.current?.click()}
+        className={[
+          'flex flex-col items-center gap-3 py-10 px-4 rounded-2xl border-2 border-dashed transition-colors',
+          dragOver
+            ? 'border-indigo-500 bg-indigo-50 dark:bg-indigo-950/30'
+            : 'border-gray-300 dark:border-gray-600 bg-gray-50 dark:bg-gray-800/50',
+          disabled ? 'cursor-not-allowed opacity-50' : 'cursor-pointer hover:border-indigo-400',
+        ].join(' ')}
+      >
+        {hiddenInput}
+        <span className="text-3xl">📁</span>
+        <p className="text-sm font-semibold text-gray-700 dark:text-gray-300">
+          Arraste um vídeo aqui
+        </p>
+        <p className="text-xs text-gray-500 dark:text-gray-400">
+          ou clique para selecionar
+        </p>
+        <p className="text-xs text-gray-400 dark:text-gray-500">MP4 ou WebM</p>
+      </div>
+    );
+  }
+
   return (
-    <div className="h-48 bg-gray-100 dark:bg-gray-800 rounded-2xl flex items-center justify-center text-gray-400">
-      Upload (em breve)
+    <div className="flex flex-col gap-3">
+      {hiddenInput}
+      <div className="flex items-center gap-3 p-4 bg-gray-50 dark:bg-gray-800 rounded-2xl border border-gray-200 dark:border-gray-700">
+        <span className="text-2xl shrink-0">🎬</span>
+        <div className="flex-1 min-w-0">
+          <p className="text-sm font-semibold text-gray-800 dark:text-gray-100 truncate">{file.name}</p>
+          <p className="text-xs text-gray-500 dark:text-gray-400">{formatSize(file.size)}</p>
+        </div>
+      </div>
+      <div className="flex gap-3">
+        <button
+          type="button"
+          onClick={() => { setFile(null); inputRef.current?.click(); }}
+          disabled={disabled}
+          className="flex-1 py-3 rounded-xl border-2 border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 font-semibold text-sm hover:border-gray-400 transition-colors disabled:opacity-50 cursor-pointer"
+        >
+          ↩ Trocar arquivo
+        </button>
+        <button
+          type="button"
+          onClick={() => onVideoReady(file)}
+          disabled={disabled}
+          className="flex-1 py-3 rounded-xl bg-indigo-600 text-white font-semibold text-sm hover:bg-indigo-700 transition-colors disabled:opacity-50 cursor-pointer"
+        >
+          Analisar →
+        </button>
+      </div>
     </div>
   );
 }
