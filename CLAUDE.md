@@ -17,6 +17,7 @@ Instituto Federal Sul-rio-grandense, Câmpus Passo Fundo.
 - React 19 + TypeScript
 - Vite (bundler)
 - Tailwind CSS (estilização — sem componentes de UI externos)
+- Yarn (gerenciador de pacotes)
 - Fetch nativo (sem axios)
 - Sem gerenciamento de estado global (useState + Context são suficientes)
 - Sem bibliotecas de UI pesadas (sem MUI, sem Ant Design, sem Chakra)
@@ -177,7 +178,9 @@ As articulações variam por exercício:
 - pushup: cotovelo, ombro, quadril
 
 **Gráfico de ângulos** — usar Recharts para o gráfico de linha dos `joint_angles`
-ao longo dos frames. É a única biblioteca de terceiros permitida além do Tailwind.
+ao longo dos frames.
+
+**Ícones** — usar `lucide-react` para todos os ícones da interface.
 
 **Responsividade** — a interface deve funcionar em mobile, pois o usuário pode
 estar se exercitando e usando o celular para gravar.
@@ -193,20 +196,3 @@ estar se exercitando e usando o celular para gravar.
 - Não esquecer o cleanup do useEffect nos hooks com interval ou timeout
 - Não instalar Redux, Zustand ou qualquer gerenciador de estado global
 
----
-
-## Variáveis de ambiente
-
-```bash
-# .env.local
-VITE_API_URL=https://<hash>.ngrok-free.app
-```
-
----
-
-## Como iniciar o desenvolvimento
-
-```bash
-npm install
-npm run dev
-```
