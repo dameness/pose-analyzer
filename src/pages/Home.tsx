@@ -1,7 +1,9 @@
 import { useState } from 'react';
-import { ArrowLeft, Check, ChevronRight, ScanLine } from 'lucide-react';
+import { AlertCircle, ArrowLeft, Check, ChevronRight, ScanLine } from 'lucide-react';
 import { ExerciseSelector } from '../components/ExerciseSelector';
 import { VideoInput } from '../components/VideoInput';
+import { AnalysisStatus } from '../components/AnalysisStatus';
+import { AnalysisResult } from '../components/AnalysisResult';
 import { useAnalysis } from '../hooks/useAnalysis';
 import type { ExerciseType } from '../types';
 
@@ -29,6 +31,11 @@ export function Home() {
   function handleBack() {
     analysis.reset();
     setStep('select');
+  }
+
+  function handleReset() {
+    analysis.reset();
+    // step stays 'video' — VideoInput re-enables and user can resubmit
   }
 
   return (
@@ -91,15 +98,17 @@ export function Home() {
             disabled={!(selectedExercise !== null && step === 'select' && analysis.state.phase === 'idle')}
             className={[
               'flex items-center justify-center w-6 h-6 rounded-full text-xs font-semibold shrink-0 transition-colors',
-              step === 'video'
-                ? 'bg-indigo-600 text-white'
-                : 'border-2 border-gray-300 dark:border-gray-600 text-gray-400 dark:text-gray-500',
+              analysis.state.phase !== 'idle'
+                ? 'bg-green-500 text-white'
+                : step === 'video'
+                  ? 'bg-indigo-600 text-white'
+                  : 'border-2 border-gray-300 dark:border-gray-600 text-gray-400 dark:text-gray-500',
               selectedExercise !== null && step === 'select' && analysis.state.phase === 'idle'
                 ? 'cursor-pointer hover:border-indigo-400 hover:text-indigo-500 dark:hover:border-indigo-400 dark:hover:text-indigo-400'
                 : 'cursor-default',
             ].join(' ')}
           >
-            2
+            {analysis.state.phase !== 'idle' ? <Check className="w-3 h-3" /> : '2'}
           </button>
           <button
             type="button"
@@ -107,7 +116,11 @@ export function Home() {
             disabled={!(selectedExercise !== null && step === 'select' && analysis.state.phase === 'idle')}
             className={[
               'transition-colors',
-              step === 'video' ? 'font-medium text-gray-700 dark:text-gray-300' : 'text-gray-400 dark:text-gray-500',
+              analysis.state.phase !== 'idle'
+                ? 'text-gray-400 dark:text-gray-500'
+                : step === 'video'
+                  ? 'font-medium text-gray-700 dark:text-gray-300'
+                  : 'text-gray-400 dark:text-gray-500',
               selectedExercise !== null && step === 'select' && analysis.state.phase === 'idle'
                 ? 'cursor-pointer hover:text-gray-700 dark:hover:text-gray-300'
                 : 'cursor-default',
@@ -116,10 +129,28 @@ export function Home() {
             Enviar vídeo
           </button>
           <span className="flex-1 h-px bg-gray-200 dark:bg-gray-700 ml-1" />
-          <span className="flex items-center justify-center w-6 h-6 rounded-full border-2 border-gray-300 dark:border-gray-600 text-xs font-semibold text-gray-400 dark:text-gray-500 shrink-0">
-            3
+          <span
+            className={[
+              'flex items-center justify-center w-6 h-6 rounded-full text-xs font-semibold shrink-0 transition-colors',
+              analysis.state.phase === 'done'
+                ? 'bg-green-500 text-white'
+                : analysis.state.phase === 'uploading' || analysis.state.phase === 'polling'
+                  ? 'bg-indigo-600 text-white'
+                  : 'border-2 border-gray-300 dark:border-gray-600 text-gray-400 dark:text-gray-500',
+            ].join(' ')}
+          >
+            {analysis.state.phase === 'done' ? <Check className="w-3 h-3" /> : '3'}
           </span>
-          <span className="text-gray-400 dark:text-gray-500">Resultado</span>
+          <span
+            className={[
+              'transition-colors',
+              analysis.state.phase === 'uploading' || analysis.state.phase === 'polling'
+                ? 'font-medium text-gray-700 dark:text-gray-300'
+                : 'text-gray-400 dark:text-gray-500',
+            ].join(' ')}
+          >
+            Resultado
+          </span>
         </div>
 
         {/* Step 1: Exercise selection */}
@@ -187,6 +218,38 @@ export function Home() {
                 Voltar
               </button>
             </div>
+          </div>
+        )}
+
+        {/* Step 3a: Loading */}
+        {(analysis.state.phase === 'uploading' || analysis.state.phase === 'polling') && (
+          <AnalysisStatus phase={analysis.state.phase} />
+        )}
+
+        {/* Step 3b: Result */}
+        {analysis.state.phase === 'done' && analysis.state.result !== null && (
+          <AnalysisResult
+            result={analysis.state.result}
+            exercise={selectedExercise!}
+            onReset={handleReset}
+          />
+        )}
+
+        {/* Step 3c: Error */}
+        {analysis.state.phase === 'error' && (
+          <div className="flex flex-col items-center gap-4 rounded-2xl bg-red-50 dark:bg-red-950/30 px-6 py-8 text-center">
+            <AlertCircle className="w-10 h-10 text-red-600 dark:text-red-400" />
+            <div className="flex flex-col gap-1">
+              <p className="text-lg font-semibold text-red-800 dark:text-red-300">Erro na análise</p>
+              <p className="text-sm text-red-600 dark:text-red-400">{analysis.state.error}</p>
+            </div>
+            <button
+              type="button"
+              onClick={handleReset}
+              className="flex items-center gap-2 px-5 py-2.5 rounded-xl bg-red-600 text-white font-semibold text-sm hover:bg-red-700 transition-colors cursor-pointer"
+            >
+              Tentar novamente
+            </button>
           </div>
         )}
       </main>
