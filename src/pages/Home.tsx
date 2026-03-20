@@ -54,41 +54,67 @@ export function Home() {
       <main className="flex-1 max-w-3xl mx-auto w-full px-4 py-10 flex flex-col gap-8">
         {/* Step indicator */}
         <div className="flex items-center gap-2 text-sm">
-          <span
+          {/* Step 1 — clicável quando estiver no step 2 e análise idle */}
+          <button
+            type="button"
+            onClick={step === 'video' && analysis.state.phase === 'idle' ? handleBack : undefined}
+            disabled={!(step === 'video' && analysis.state.phase === 'idle')}
             className={[
               'flex items-center justify-center w-6 h-6 rounded-full text-xs font-semibold shrink-0 transition-colors',
               step === 'select' ? 'bg-indigo-600 text-white' : 'bg-green-500 text-white',
+              step === 'video' && analysis.state.phase === 'idle'
+                ? 'cursor-pointer hover:ring-2 hover:ring-green-400 hover:ring-offset-1'
+                : 'cursor-default',
             ].join(' ')}
           >
             {step === 'select' ? '1' : <Check className="w-3 h-3" />}
-          </span>
-          <span
+          </button>
+          <button
+            type="button"
+            onClick={step === 'video' && analysis.state.phase === 'idle' ? handleBack : undefined}
+            disabled={!(step === 'video' && analysis.state.phase === 'idle')}
             className={[
               'font-medium transition-colors',
               step === 'select' ? 'text-gray-700 dark:text-gray-300' : 'text-gray-400 dark:text-gray-500',
+              step === 'video' && analysis.state.phase === 'idle'
+                ? 'cursor-pointer hover:text-gray-700 dark:hover:text-gray-300'
+                : 'cursor-default',
             ].join(' ')}
           >
             Escolha o exercício
-          </span>
+          </button>
           <span className="flex-1 h-px bg-gray-200 dark:bg-gray-700 ml-1" />
-          <span
+          {/* Step 2 — clicável quando exercício selecionado, estiver no step 1 e análise idle */}
+          <button
+            type="button"
+            onClick={selectedExercise !== null && step === 'select' && analysis.state.phase === 'idle' ? handleContinue : undefined}
+            disabled={!(selectedExercise !== null && step === 'select' && analysis.state.phase === 'idle')}
             className={[
               'flex items-center justify-center w-6 h-6 rounded-full text-xs font-semibold shrink-0 transition-colors',
               step === 'video'
                 ? 'bg-indigo-600 text-white'
                 : 'border-2 border-gray-300 dark:border-gray-600 text-gray-400 dark:text-gray-500',
+              selectedExercise !== null && step === 'select' && analysis.state.phase === 'idle'
+                ? 'cursor-pointer hover:border-indigo-400 hover:text-indigo-500 dark:hover:border-indigo-400 dark:hover:text-indigo-400'
+                : 'cursor-default',
             ].join(' ')}
           >
             2
-          </span>
-          <span
+          </button>
+          <button
+            type="button"
+            onClick={selectedExercise !== null && step === 'select' && analysis.state.phase === 'idle' ? handleContinue : undefined}
+            disabled={!(selectedExercise !== null && step === 'select' && analysis.state.phase === 'idle')}
             className={[
               'transition-colors',
               step === 'video' ? 'font-medium text-gray-700 dark:text-gray-300' : 'text-gray-400 dark:text-gray-500',
+              selectedExercise !== null && step === 'select' && analysis.state.phase === 'idle'
+                ? 'cursor-pointer hover:text-gray-700 dark:hover:text-gray-300'
+                : 'cursor-default',
             ].join(' ')}
           >
             Enviar vídeo
-          </span>
+          </button>
           <span className="flex-1 h-px bg-gray-200 dark:bg-gray-700 ml-1" />
           <span className="flex items-center justify-center w-6 h-6 rounded-full border-2 border-gray-300 dark:border-gray-600 text-xs font-semibold text-gray-400 dark:text-gray-500 shrink-0">
             3
