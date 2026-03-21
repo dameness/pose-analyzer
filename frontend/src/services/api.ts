@@ -45,11 +45,7 @@ export async function getStatus(jobId: string): Promise<StatusResponse> {
           hip: [170, 165, 140, 130],
           ankle: [90, 88, 85, 84],
         },
-        joint_results: {
-          knee: 'incorrect',
-          hip: 'correct',
-          ankle: 'correct',
-        },
+        joint_results: { knee: 'incorrect', hip: 'correct', ankle: 'correct' },
         errors: ['joelho passando a ponta do pé'],
       },
     };

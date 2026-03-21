@@ -3,6 +3,15 @@ import type { AnalysisResultProps } from '../types';
 import { JointFeedback } from './JointFeedback';
 import { AngleChart } from './AngleChart';
 
+const NOME_ARTICULACAO: Record<string, string> = {
+  knee: 'joelho',
+  hip: 'quadril',
+  ankle: 'tornozelo',
+  elbow: 'cotovelo',
+  shoulder: 'ombro',
+  spine: 'coluna',
+};
+
 export function AnalysisResult({ result, onReset }: AnalysisResultProps) {
   const correct = result.result === 'correct';
   const joints = Object.keys(result.joint_results);
@@ -47,7 +56,7 @@ export function AnalysisResult({ result, onReset }: AnalysisResultProps) {
           {joints.map(joint => (
             <JointFeedback
               key={joint}
-              joint={joint}
+              joint={NOME_ARTICULACAO[joint] ?? joint}
               correct={result.joint_results[joint] === 'correct'}
             />
           ))}

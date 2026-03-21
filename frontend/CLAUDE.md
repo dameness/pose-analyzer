@@ -142,7 +142,7 @@ const mockResult: StatusResponse = {
 
 - Ícone de check verde (`lucide-react: CheckCircle2`) para correto
 - Ícone de X vermelho (`lucide-react: XCircle`) para incorreto
-- Nome da articulação vem diretamente das keys de `joint_results` (já em português, definido pelo back-end)
+- Keys de `joint_results` chegam em inglês da API — a tradução para português (knee → joelho, hip → quadril, etc.) é feita via `NOME_ARTICULACAO` em `AnalysisResult.tsx`
 
 ### AngleChart
 
