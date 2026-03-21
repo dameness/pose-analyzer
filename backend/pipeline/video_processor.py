@@ -1,6 +1,10 @@
+import os
+
 import cv2
 from pipeline.mediapipe_runner import inicializar_pose, extrair_keypoints
 from pipeline.postural_checker import verificar_exercicio
+
+_MAX_DURACAO = int(os.getenv("MAX_VIDEO_DURATION_SECONDS", "30"))
 
 
 def processar_video(video_path: str, exercise: str) -> dict:
@@ -13,6 +17,16 @@ def processar_video(video_path: str, exercise: str) -> dict:
 
     if not cap.isOpened():
         raise RuntimeError(f"Não foi possível abrir o vídeo: {video_path}")
+
+    fps = cap.get(cv2.CAP_PROP_FPS)
+    total_frames = cap.get(cv2.CAP_PROP_FRAME_COUNT)
+    duracao = total_frames / fps if fps > 0 else 0
+
+    if duracao > _MAX_DURACAO:
+        cap.release()
+        raise ValueError(
+            f"Vídeo muito longo: {duracao:.1f}s (máximo permitido: {_MAX_DURACAO}s)"
+        )
 
     # static_image_mode=False é mais eficiente para sequências de frames
     pose = inicializar_pose(static_image_mode=False)
