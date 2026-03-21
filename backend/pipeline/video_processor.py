@@ -2,6 +2,7 @@ import os
 
 import cv2
 from pipeline.mediapipe_runner import inicializar_pose, extrair_keypoints
+from pipeline.movement_detector import detectar_inicio_movimento
 from pipeline.postural_checker import verificar_exercicio
 
 _MAX_DURACAO = int(os.getenv("MAX_VIDEO_DURATION_SECONDS", "30"))
@@ -48,6 +49,10 @@ def processar_video(video_path: str, exercise: str) -> dict:
         cap.release()
         pose.close()
 
+    # Detectar início do movimento e descartar frames ociosos
+    frame_inicio = detectar_inicio_movimento(keypoints_por_frame, exercise)
+    keypoints_por_frame = keypoints_por_frame[frame_inicio:]
+
     frames_analisados = len([k for k in keypoints_por_frame if k is not None])
 
     # Confiança média da detecção — média de visibility de todos os keypoints detectados
@@ -64,5 +69,6 @@ def processar_video(video_path: str, exercise: str) -> dict:
         "exercise": exercise,
         "confidence": round(confidence, 4),
         "frames_analyzed": frames_analisados,
+        "trimmed_frames": frame_inicio,
         **resultado,  # result, joint_angles, joint_results, errors
     }
