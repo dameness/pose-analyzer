@@ -37,12 +37,14 @@ Funções existentes (migradas do Colab):
 Índices dos keypoints relevantes (padrão MediaPipe):
 
 ```
+ 0 = nariz
 11 = ombro esquerdo     12 = ombro direito
 13 = cotovelo esquerdo  14 = cotovelo direito
 15 = pulso esquerdo     16 = pulso direito
 23 = quadril esquerdo   24 = quadril direito
 25 = joelho esquerdo    26 = joelho direito
 27 = tornozelo esquerdo 28 = tornozelo direito
+31 = índice pé esquerdo 32 = índice pé direito
 ```
 
 ### `pipeline/angle_calculator.py`
@@ -126,27 +128,31 @@ video_processor.processar_video()
 
 ---
 
-## Limiares posturais (estado atual — expandir conforme validação)
+## Limiares posturais (estado atual — ajustar após validação com especialistas)
 
 Os limiares abaixo são ponto de partida. Serão ajustados após validação
 com especialistas de educação física e fisioterapia.
 
 ```python
 # squat
-JOELHO_MINIMO_SQUAT = 70    # graus no ponto mais baixo
-JOELHO_MAXIMO_SQUAT = 100
-QUADRIL_MINIMO_SQUAT = 80
-# TODO: TORNOZELO_SQUAT — articulação prevista na spec, limiar pendente de validação
+JOELHO_MINIMO_SQUAT    = 70    # graus no ponto mais baixo
+JOELHO_MAXIMO_SQUAT    = 100
+QUADRIL_MINIMO_SQUAT   = 80
+TORNOZELO_MINIMO_SQUAT = 60    # dorsiflexão mínima no ponto mais baixo
+TORNOZELO_MAXIMO_SQUAT = 90
 
 # pushup
 COTOVELO_MINIMO_PUSHUP = 80
 COTOVELO_MAXIMO_PUSHUP = 100
-# TODO: OMBRO_PUSHUP e QUADRIL_PUSHUP — articulações previstas na spec, pendentes
+OMBRO_MINIMO_PUSHUP    = 30    # ângulo cotovelo→ombro→quadril na descida
+OMBRO_MAXIMO_PUSHUP    = 70
+QUADRIL_MINIMO_PUSHUP  = 160   # quadril deve estar estendido (corpo reto)
 
 # situp
-QUADRIL_MINIMO_SITUP = 80
-QUADRIL_MAXIMO_SITUP = 110
-# TODO: COLUNA_SITUP — articulação prevista na spec, limiar pendente de validação
+QUADRIL_MINIMO_SITUP   = 80
+QUADRIL_MAXIMO_SITUP   = 110
+COLUNA_MINIMO_SITUP    = 60    # ângulo nariz→centro_ombros→centro_quadris na subida
+COLUNA_MAXIMO_SITUP    = 120
 ```
 
 ---
@@ -167,7 +173,11 @@ uvicorn main:app --reload --port 8000
 
 ```bash
 # backend/.env
-FRONTEND_DIST_PATH=../frontend/dist   # caminho do build do React
+# Origins permitidas pelo CORS — necessário apenas em desenvolvimento
+# Em produção o front é servido pelo próprio FastAPI; CORS não se aplica
+ALLOWED_ORIGINS=http://localhost:5173
+
+# Duração máxima de vídeo aceita (segundos)
 MAX_VIDEO_DURATION_SECONDS=30
 ```
 

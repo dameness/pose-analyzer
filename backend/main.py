@@ -3,13 +3,27 @@ import uuid
 import threading
 import tempfile
 
+from dotenv import load_dotenv
 from fastapi import FastAPI, File, Form, HTTPException, UploadFile
+from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
 
 from models.schemas import JobQueued, JobStatusDone
 from pipeline.video_processor import processar_video
 
+load_dotenv()
+
+_origins_raw = os.getenv("ALLOWED_ORIGINS", "")
+allowed_origins = [o.strip() for o in _origins_raw.split(",") if o.strip()] or ["http://localhost:5173"]
+
 app = FastAPI(title="Pose Analyzer API")
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=allowed_origins,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
 
 # Armazena o estado de cada job em memória
 # { job_id: { "status": "queued"|"processing"|"done"|"error", "result": dict|str|None } }
