@@ -18,6 +18,7 @@ export interface AnalysisResult {
   confidence: number;
   frames_analyzed: number;
   joint_angles: JointAngles;
+  joint_results: Record<string, 'correct' | 'incorrect'>;
   errors: string[];
 }
 

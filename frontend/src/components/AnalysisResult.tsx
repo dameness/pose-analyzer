@@ -1,22 +1,11 @@
 import { CheckCircle2, XCircle, AlertTriangle, RotateCcw } from 'lucide-react';
-import type { AnalysisResultProps, ExerciseType } from '../types';
+import type { AnalysisResultProps } from '../types';
 import { JointFeedback } from './JointFeedback';
 import { AngleChart } from './AngleChart';
 
-const JOINTS_BY_EXERCISE: Record<ExerciseType, string[]> = {
-  squat: ['joelho', 'quadril', 'tornozelo'],
-  situp: ['quadril', 'coluna'],
-  pushup: ['cotovelo', 'ombro', 'quadril'],
-};
-
-function isJointCorrect(joint: string, errors: string[]): boolean {
-  const name = joint.toLowerCase();
-  return !errors.some(e => e.toLowerCase().includes(name));
-}
-
 export function AnalysisResult({ result, onReset }: AnalysisResultProps) {
   const correct = result.result === 'correct';
-  const joints = JOINTS_BY_EXERCISE[result.exercise];
+  const joints = Object.keys(result.joint_results);
   const confidence = Math.round(result.confidence * 100);
 
   return (
@@ -59,7 +48,7 @@ export function AnalysisResult({ result, onReset }: AnalysisResultProps) {
             <JointFeedback
               key={joint}
               joint={joint}
-              correct={isJointCorrect(joint, result.errors)}
+              correct={result.joint_results[joint] === 'correct'}
             />
           ))}
         </div>
