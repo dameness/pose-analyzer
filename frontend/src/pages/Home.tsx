@@ -1,5 +1,5 @@
-import { useState } from 'react';
-import { AlertCircle, ArrowLeft, Check, ChevronRight, ScanLine } from 'lucide-react';
+import { useState, useEffect } from 'react';
+import { AlertCircle, ArrowLeft, Check, ChevronRight, Moon, ScanLine, Sun } from 'lucide-react';
 import { ExerciseSelector } from '../components/ExerciseSelector';
 import { VideoInput } from '../components/VideoInput';
 import { AnalysisStatus } from '../components/AnalysisStatus';
@@ -13,10 +13,26 @@ const EXERCISE_LABELS: Record<ExerciseType, string> = {
   pushup: 'Flexão',
 };
 
+function useDarkMode() {
+  const [dark, setDark] = useState(() => {
+    const stored = localStorage.getItem('theme');
+    if (stored) return stored === 'dark';
+    return window.matchMedia('(prefers-color-scheme: dark)').matches;
+  });
+
+  useEffect(() => {
+    document.documentElement.classList.toggle('dark', dark);
+    localStorage.setItem('theme', dark ? 'dark' : 'light');
+  }, [dark]);
+
+  return { dark, toggle: () => setDark(d => !d) };
+}
+
 export function Home() {
   const [selectedExercise, setSelectedExercise] = useState<ExerciseType | null>(null);
   const [step, setStep] = useState<'select' | 'video'>('select');
   const analysis = useAnalysis();
+  const { dark, toggle: toggleDark } = useDarkMode();
 
   function handleContinue() {
     if (!selectedExercise) return;
@@ -46,7 +62,7 @@ export function Home() {
           <div className="w-9 h-9 rounded-xl bg-indigo-600 flex items-center justify-center shrink-0">
             <ScanLine className="w-5 h-5 text-white" />
           </div>
-          <div>
+          <div className="flex-1">
             <h1 className="text-base font-semibold text-gray-900 dark:text-gray-100 leading-tight">
               Pose Analyzer
             </h1>
@@ -54,6 +70,22 @@ export function Home() {
               Análise postural com IA
             </p>
           </div>
+          <button
+            type="button"
+            onClick={toggleDark}
+            aria-label={dark ? 'Ativar modo claro' : 'Ativar modo escuro'}
+            className={[
+              'relative w-14 h-7 rounded-full transition-colors duration-300 cursor-pointer shrink-0',
+              dark ? 'bg-indigo-600' : 'bg-gray-300',
+            ].join(' ')}
+          >
+            <span className={[
+              'absolute top-1 w-5 h-5 rounded-full bg-white shadow flex items-center justify-center transition-all duration-300',
+              dark ? 'left-8' : 'left-1',
+            ].join(' ')}>
+              {dark ? <Moon className="w-3 h-3 text-indigo-600" /> : <Sun className="w-3 h-3 text-gray-400" />}
+            </span>
+          </button>
         </div>
       </header>
 
