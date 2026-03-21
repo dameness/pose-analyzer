@@ -5,6 +5,7 @@ import { VideoInput } from '../components/VideoInput';
 import { AnalysisStatus } from '../components/AnalysisStatus';
 import { AnalysisResult } from '../components/AnalysisResult';
 import { useAnalysis } from '../hooks/useAnalysis';
+import { useVideoRecorder } from '../hooks/useVideoRecorder';
 import type { ExerciseType } from '../types';
 
 const EXERCISE_LABELS: Record<ExerciseType, string> = {
@@ -32,6 +33,7 @@ export function Home() {
   const [selectedExercise, setSelectedExercise] = useState<ExerciseType | null>(null);
   const [step, setStep] = useState<'select' | 'video'>('select');
   const analysis = useAnalysis();
+  const recorder = useVideoRecorder();
   const { dark, toggle: toggleDark } = useDarkMode();
 
   function handleContinue() {
@@ -45,6 +47,9 @@ export function Home() {
   }
 
   function handleBack() {
+    if (recorder.state.status === 'recording' || recorder.state.status === 'paused') {
+      recorder.stopRecording();
+    }
     analysis.reset();
     setStep('select');
   }
@@ -235,6 +240,7 @@ export function Home() {
             </div>
 
             <VideoInput
+              recorder={recorder}
               onVideoReady={handleVideoReady}
               disabled={analysis.state.phase !== 'idle'}
             />

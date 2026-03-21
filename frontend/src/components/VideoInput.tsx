@@ -1,13 +1,11 @@
 import { useState, useRef, useEffect } from 'react';
-import { Video, Upload } from 'lucide-react';
+import { Pause, Play, Video, Upload } from 'lucide-react';
 import type { VideoInputProps } from '../types';
-import { useVideoRecorder } from '../hooks/useVideoRecorder';
 
 type InputMode = 'record' | 'upload';
 
-export function VideoInput({ onVideoReady, disabled = false }: VideoInputProps) {
+export function VideoInput({ recorder, onVideoReady, disabled = false }: VideoInputProps) {
   const [mode, setMode] = useState<InputMode>('record');
-  const recorder = useVideoRecorder();
 
   function handleModeChange(next: InputMode) {
     if (next === mode) return;
@@ -76,11 +74,11 @@ function RecordMode({
   onVideoReady,
   disabled,
 }: {
-  recorder: ReturnType<typeof useVideoRecorder>;
+  recorder: VideoInputProps['recorder'];
   onVideoReady: (file: File) => void;
   disabled: boolean;
 }) {
-  const { state, startRecording, stopRecording, reset, streamRef } = recorder;
+  const { state, startRecording, stopRecording, pauseRecording, resumeRecording, reset, streamRef } = recorder;
   const [elapsed, setElapsed] = useState(0);
   const elapsedRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
@@ -137,7 +135,8 @@ function RecordMode({
     );
   }
 
-  if (state.status === 'recording') {
+  if (state.status === 'recording' || state.status === 'paused') {
+    const pausado = state.status === 'paused';
     return (
       <div className="flex flex-col items-center gap-3 bg-gray-900 rounded-2xl overflow-hidden">
         <LivePreview streamRef={streamRef} />
@@ -145,15 +144,36 @@ function RecordMode({
           <span className="text-white font-mono text-sm">
             {formatTime(elapsed)} / 00:30
           </span>
-          <button
-            type="button"
-            onClick={stopRecording}
-            disabled={disabled}
-            className="w-14 h-14 rounded-full bg-red-500 hover:bg-red-600 flex items-center justify-center transition-colors disabled:opacity-50 cursor-pointer"
-            aria-label="Parar gravação"
-          >
-            <span className="w-5 h-5 rounded-sm bg-white" />
-          </button>
+          {pausado && (
+            <span className="text-xs text-yellow-400 font-semibold uppercase tracking-wide">
+              Pausado
+            </span>
+          )}
+          <div className="flex items-center gap-4">
+            {/* Botão pausa / retomar */}
+            <button
+              type="button"
+              onClick={pausado ? resumeRecording : pauseRecording}
+              disabled={disabled}
+              className="w-12 h-12 rounded-full bg-yellow-500 hover:bg-yellow-400 flex items-center justify-center transition-colors disabled:opacity-50 cursor-pointer"
+              aria-label={pausado ? 'Retomar gravação' : 'Pausar gravação'}
+            >
+              {pausado
+                ? <Play className="w-5 h-5 text-white fill-white" />
+                : <Pause className="w-5 h-5 text-white fill-white" />
+              }
+            </button>
+            {/* Botão parar */}
+            <button
+              type="button"
+              onClick={stopRecording}
+              disabled={disabled}
+              className="w-14 h-14 rounded-full bg-red-500 hover:bg-red-600 flex items-center justify-center transition-colors disabled:opacity-50 cursor-pointer"
+              aria-label="Parar gravação"
+            >
+              <span className="w-5 h-5 rounded-sm bg-white" />
+            </button>
+          </div>
         </div>
       </div>
     );

@@ -18,13 +18,17 @@ const INITIAL_STATE: VideoRecorderState = {
   error: null,
 };
 
-export function useVideoRecorder(): {
+export type UseVideoRecorderReturn = {
   state: VideoRecorderState;
   startRecording: () => Promise<void>;
   stopRecording: () => void;
+  pauseRecording: () => void;
+  resumeRecording: () => void;
   reset: () => void;
   streamRef: React.RefObject<MediaStream | null>;
-} {
+};
+
+export function useVideoRecorder(): UseVideoRecorderReturn {
   const [state, setState] = useState<VideoRecorderState>(INITIAL_STATE);
   const mediaRecorderRef = useRef<MediaRecorder | null>(null);
   const streamRef = useRef<MediaStream | null>(null);
@@ -119,10 +123,24 @@ export function useVideoRecorder(): {
     }
   }
 
+  function pauseRecording(): void {
+    if (mediaRecorderRef.current && mediaRecorderRef.current.state === 'recording') {
+      mediaRecorderRef.current.pause();
+      setState(prev => ({ ...prev, status: 'paused' }));
+    }
+  }
+
+  function resumeRecording(): void {
+    if (mediaRecorderRef.current && mediaRecorderRef.current.state === 'paused') {
+      mediaRecorderRef.current.resume();
+      setState(prev => ({ ...prev, status: 'recording' }));
+    }
+  }
+
   function reset(): void {
     cleanup();
     setState(INITIAL_STATE);
   }
 
-  return { state, startRecording, stopRecording, reset, streamRef };
+  return { state, startRecording, stopRecording, pauseRecording, resumeRecording, reset, streamRef };
 }

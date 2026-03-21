@@ -36,7 +36,7 @@ export interface AnalysisState {
   error: string | null;
 }
 
-export type RecordingStatus = 'idle' | 'recording' | 'stopped';
+export type RecordingStatus = 'idle' | 'recording' | 'paused' | 'stopped';
 
 export interface VideoRecorderState {
   status: RecordingStatus;
@@ -51,6 +51,7 @@ export interface ExerciseSelectorProps {
 }
 
 export interface VideoInputProps {
+  recorder: import('../hooks/useVideoRecorder').UseVideoRecorderReturn;
   onVideoReady: (file: File) => void;
   disabled?: boolean;
 }
