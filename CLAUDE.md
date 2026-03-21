@@ -118,23 +118,11 @@ Consultado via polling a cada 2s até `status === "done"`.
 
 ---
 
-## Como rodar em desenvolvimento
+## Como rodar
 
-```bash
-# Terminal 1 — back-end
-cd backend
-python -m venv venv
-source venv/bin/activate   # Windows: venv\Scripts\activate
-pip install -r requirements.txt
-uvicorn main:app --reload --port 8000
+Ver `backend/CLAUDE.md` e `frontend/CLAUDE.md` para instruções de setup de cada camada.
 
-# Terminal 2 — front-end
-cd frontend
-yarn install
-yarn dev   # roda em localhost:5173
-```
-
-Em produção (ou para apresentação), fazer o build do front e servir pelo FastAPI:
+Build de produção (front servido pelo FastAPI):
 
 ```bash
 cd frontend && yarn build
