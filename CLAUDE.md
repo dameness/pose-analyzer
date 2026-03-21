@@ -21,6 +21,7 @@ pose-analyzer/
       __init__.py
       mediapipe_runner.py    # inicializa o Pose, processa frames, extrai keypoints
       angle_calculator.py    # calcular_angulo() — lógica de ângulos entre keypoints
+      movement_detector.py   # detecta início/fim do movimento, descarta frames ociosos
       postural_checker.py    # lógica de correto/incorreto por exercício e articulação
       video_processor.py     # lê vídeo frame a frame via OpenCV, orquestra o pipeline
     models/
@@ -95,6 +96,8 @@ Consultado via polling a cada 2s até `status === "done"`.
     "result": "correct",
     "confidence": 0.87,
     "frames_analyzed": 42,
+    "trimmed_start": 18,
+    "trimmed_end": 120,
     "joint_angles": {
       "knee": [120, 118, 95, 88],
       "hip": [170, 165, 140, 130],

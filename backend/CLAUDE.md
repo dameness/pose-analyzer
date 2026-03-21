@@ -58,6 +58,43 @@ Funções existentes (migradas do Colab):
   na articulação p2 (vértice). Usa produto escalar via NumPy.
   Fórmula: arccos(dot(AB, CB) / (|AB| \* |CB|))
 
+### `pipeline/movement_detector.py`
+
+Pré-processamento — detecta onde o exercício começa e termina no vídeo,
+descartando frames ociosos no início e no final da gravação.
+
+Funções:
+
+- `detectar_inicio_movimento(keypoints_por_frame, exercise) -> int`
+  Retorna o índice do primeiro frame relevante. Calcula o ângulo da
+  articulação primária do exercício em cada frame, suaviza com moving
+  average (janela=5), e procura o primeiro trecho de 5 frames consecutivos
+  com queda acumulada >= 15°. Retorna 0 se nenhum movimento for detectado.
+- `detectar_fim_movimento(keypoints_por_frame, exercise) -> int`
+  Retorna o índice (exclusivo) do último frame relevante. Varre a série
+  suavizada de trás para frente procurando o último trecho com variação
+  angular significativa. Retorna `len(keypoints_por_frame)` se não houver
+  idle no final.
+
+Constantes de configuração (topo do arquivo):
+
+```python
+JANELA_SUAVIZACAO = 5         # moving average para filtrar jitter
+FRAMES_CONSECUTIVOS = 5       # frames seguidos na janela de detecção
+DELTA_ACUMULADO_MINIMO = 15.0 # graus de variação mínima para considerar movimento
+LOOKBACK_FRAMES = 3           # margem de segurança antes/depois do ponto detectado
+```
+
+Articulação primária por exercício (a que mais muda durante o movimento):
+
+- squat → joelho (QUADRIL_ESQ → JOELHO_ESQ → TORNOZELO_ESQ)
+- pushup → cotovelo (OMBRO_ESQ → COTOVELO_ESQ → PULSO_ESQ)
+- situp → quadril (OMBRO_ESQ → QUADRIL_ESQ → JOELHO_ESQ)
+
+**Importante:** não colocar lógica de limiares posturais neste módulo —
+ele trata apenas da detecção temporal (quando começa/termina), não da
+correção do movimento.
+
 ### `pipeline/postural_checker.py`
 
 Lógica de negócio — define o que é correto/incorreto para cada exercício.
@@ -117,13 +154,16 @@ video_processor.processar_video()
   para cada frame:
     OpenCV lê o frame
     mediapipe_runner.extrair_keypoints()
-    angle_calculator.calcular_angulo() — para cada articulação relevante
         ↓
-  agrega ângulos ao longo dos frames
+  movement_detector.detectar_inicio_movimento()
+  movement_detector.detectar_fim_movimento()
+  recorta keypoints_por_frame[inicio:fim]
+        ↓
+  calcula confiança e conta frames analisados
         ↓
   postural_checker.verificar_{exercise}()
         ↓
-  retorna dict de resultado
+  retorna dict de resultado (inclui trimmed_start e trimmed_end)
 ```
 
 ---
