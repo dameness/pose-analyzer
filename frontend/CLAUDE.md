@@ -13,6 +13,7 @@ Leia também o `CLAUDE.md` na raiz do projeto para contexto geral.
 - Recharts (gráfico de ângulos por frame)
 - lucide-react (ícones)
 - Fetch nativo — sem axios
+- Vitest + React Testing Library (testes unitários de hooks)
 
 Sem gerenciamento de estado global. Sem bibliotecas de UI (MUI, Chakra, etc).
 
@@ -30,11 +31,11 @@ src/
 
   hooks/
     useAnalysis.ts        # orquestra: upload → polling → resultado → reset
-    useVideoRecorder.ts   # MediaRecorder API: gravar, parar, obter blob
+    useVideoRecorder.ts   # MediaRecorder API: gravar, pausar, retomar, parar, obter blob
 
   components/
     ExerciseSelector.tsx  # três cards clicáveis: Agachamento, Abdominal, Flexão
-    VideoInput.tsx        # gravar pela câmera OU fazer upload de arquivo
+    VideoInput.tsx        # gravar pela câmera OU fazer upload; recebe `recorder` como prop
     AnalysisStatus.tsx    # spinner + mensagem durante o polling
     AnalysisResult.tsx    # resultado completo — orquestra JointFeedback + AngleChart
     JointFeedback.tsx     # uma articulação: nome + ícone verde/vermelho
@@ -42,6 +43,10 @@ src/
 
   pages/
     Home.tsx              # única página — orquestra todos os componentes
+
+  test/
+    setup.ts              # mocks globais: MockMediaRecorder, getUserMedia
+    useVideoRecorder.test.ts  # testes do hook de gravação
 
   main.tsx
   App.tsx
@@ -127,7 +132,9 @@ const mockResult: StatusResponse = {
 ### VideoInput
 
 - Duas abas: "Gravar" e "Upload"
-- Gravar: acessa câmera via `getUserMedia`, botão iniciar/parar, preview do vídeo gravado
+- Recebe `recorder` como prop (instância de `useVideoRecorder` criada em `Home.tsx`)
+- Gravar: acessa câmera via `getUserMedia`, botões iniciar / pausar / retomar / parar, preview ao vivo
+- Durante gravação: botão amarelo de pausa (Pause/Play) + botão vermelho de parar; badge "Pausado" visível quando pausado
 - Upload: input file aceitando `video/mp4,video/webm`
 - Limite visual de 30 segundos na gravação (contador regressivo)
 - Após ter o vídeo (gravado ou uploaded), mostrar preview e botão "Analisar"
@@ -160,6 +167,37 @@ const mockResult: StatusResponse = {
 - Lista de erros encontrados (se `errors.length > 0`)
 - AngleChart abaixo
 - Botão "Analisar novamente" que reseta o estado
+
+---
+
+## useVideoRecorder
+
+`Home.tsx` instancia o hook e passa o objeto `recorder` para `VideoInput` como prop. Isso permite que `Home.tsx` chame `recorder.stopRecording()` ao navegar de volta para a seleção de exercício.
+
+```typescript
+export type UseVideoRecorderReturn = {
+  state: VideoRecorderState; // status: 'idle' | 'recording' | 'paused' | 'stopped'
+  startRecording: () => Promise<void>;
+  stopRecording: () => void;
+  pauseRecording: () => void;   // chama MediaRecorder.pause()
+  resumeRecording: () => void;  // chama MediaRecorder.resume()
+  reset: () => void;
+  streamRef: React.RefObject<MediaStream | null>;
+};
+```
+
+Fluxo de status da gravação:
+
+```
+idle
+  → (startRecording) → recording
+  → (pauseRecording) → paused
+  → (resumeRecording) → recording
+  → (stopRecording)  → stopped   ← blob disponível em state.videoBlob
+  → (reset)          → idle
+```
+
+Ao navegar de volta (`handleBack` em `Home.tsx`), se o status for `'recording'` ou `'paused'`, `stopRecording()` é chamado automaticamente — o vídeo parcial fica disponível em `state.videoBlob` quando o usuário retornar ao step 2.
 
 ---
 
@@ -197,12 +235,35 @@ O hook expõe:
 
 ---
 
+## Testes
+
+Framework: **Vitest** + **React Testing Library** (jsdom).
+
+```bash
+yarn test         # roda uma vez
+yarn test:watch   # modo watch
+```
+
+Configuração em `vitest.config.ts` (separado do `vite.config.ts` — não usa o plugin Babel do React Compiler, que conflita com Vitest).
+
+O diretório `src/test/` é excluído do `tsconfig.app.json` para não poluir o build de produção.
+
+**`src/test/setup.ts`** — mocks globais registrados via `globalThis`:
+- `MockMediaRecorder`: implementa a interface do `MediaRecorder` (start/stop/pause/resume), rastreia última instância em `_lastInstance`
+- `navigator.mediaDevices.getUserMedia`: retorna uma stream fake com uma faixa de vídeo
+
+Ao adicionar novos testes de hooks que dependem de APIs de browser, adicionar os mocks necessários no `setup.ts`.
+
+---
+
 ## O que NÃO fazer
 
 - Não usar `any` — tipar tudo com as interfaces de `types/index.ts`
 - Não fazer chamadas fetch fora de `services/api.ts`
 - Não colocar lógica de polling dentro de componentes — pertence ao `useAnalysis`
 - Não esquecer o cleanup do `setInterval` no return do `useEffect`
+- Não instanciar `useVideoRecorder` dentro de `VideoInput` — o hook pertence a `Home.tsx`
+- Não usar `global` nos arquivos de teste — usar `globalThis` (compatível com browser e Node)
 - Não estilizar com `style={{}}` inline — usar classes Tailwind
 - Não mapear nomes de articulações do inglês para português dentro do back-end —
   essa tradução é responsabilidade do front-end
