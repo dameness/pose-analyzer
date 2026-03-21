@@ -66,7 +66,7 @@ function LivePreview({ streamRef }: { streamRef: React.RefObject<MediaStream | n
       autoPlay
       muted
       playsInline
-      className="w-full rounded-t-2xl bg-gray-900 max-h-60 object-cover"
+      className="w-full rounded-t-2xl bg-gray-900 max-h-96 object-contain"
     />
   );
 }
