@@ -1,9 +1,9 @@
 """
-Detecção de início de movimento no vídeo.
+Detecção de início e fim de movimento no vídeo.
 
-Analisa a articulação primária de cada exercício e identifica o frame
-onde o usuário começa a executar o movimento, descartando frames ociosos
-no início da gravação.
+Analisa a articulação primária de cada exercício e identifica os frames
+onde o usuário começa e para de executar o movimento, descartando frames
+ociosos no início e no final da gravação.
 """
 
 from pipeline.angle_calculator import calcular_angulo
@@ -74,6 +74,14 @@ def _suavizar(valores: list[float], janela: int) -> list[float]:
     return resultado
 
 
+def _calcular_deltas(angulos_suavizados: list[float]) -> list[float]:
+    """Calcula deltas frame-a-frame da série suavizada."""
+    return [
+        angulos_suavizados[i + 1] - angulos_suavizados[i]
+        for i in range(len(angulos_suavizados) - 1)
+    ]
+
+
 def _encontrar_inicio(
     angulos_suavizados: list[float],
     indices_frames: list[int],
@@ -86,10 +94,7 @@ def _encontrar_inicio(
 
     Retorna o índice no vetor original de keypoints, ou 0 se nada encontrado.
     """
-    deltas = [
-        angulos_suavizados[i + 1] - angulos_suavizados[i]
-        for i in range(len(angulos_suavizados) - 1)
-    ]
+    deltas = _calcular_deltas(angulos_suavizados)
 
     for i in range(len(deltas) - FRAMES_CONSECUTIVOS + 1):
         janela = deltas[i : i + FRAMES_CONSECUTIVOS]
@@ -97,9 +102,6 @@ def _encontrar_inicio(
         if all(d < 0 for d in janela):
             queda_acumulada = abs(sum(janela))
             if queda_acumulada >= DELTA_ACUMULADO_MINIMO:
-                # Mapear de volta para índice do frame original
-                # i no vetor de deltas corresponde a angulos_suavizados[i],
-                # que por sua vez corresponde a indices_frames[i + offset_suavizacao]
                 idx_suavizado = i + offset_suavizacao
                 if idx_suavizado < len(indices_frames):
                     frame_original = indices_frames[idx_suavizado]
@@ -108,6 +110,38 @@ def _encontrar_inicio(
                 return max(0, frame_original - LOOKBACK_FRAMES)
 
     return 0
+
+
+def _encontrar_fim(
+    angulos_suavizados: list[float],
+    indices_frames: list[int],
+) -> int | None:
+    """
+    Percorre a série suavizada de trás para frente e encontra o último
+    trecho com FRAMES_CONSECUTIVOS deltas significativos (positivos ou
+    negativos), indicando que o exercício ainda está em andamento.
+
+    Retorna o índice (exclusivo) no vetor original de keypoints onde o
+    movimento termina, ou None se nenhum idle final for detectado.
+    """
+    deltas = _calcular_deltas(angulos_suavizados)
+
+    # Percorrer janelas de trás para frente
+    for i in range(len(deltas) - FRAMES_CONSECUTIVOS, -1, -1):
+        janela = deltas[i : i + FRAMES_CONSECUTIVOS]
+
+        variacao_acumulada = sum(abs(d) for d in janela)
+        if variacao_acumulada >= DELTA_ACUMULADO_MINIMO:
+            # Esta janela ainda tem movimento significativo.
+            # O fim do movimento é o final desta janela + margem.
+            idx_fim = i + FRAMES_CONSECUTIVOS
+            if idx_fim < len(indices_frames):
+                frame_original = indices_frames[idx_fim]
+            else:
+                frame_original = indices_frames[-1]
+            return min(len(indices_frames), frame_original + LOOKBACK_FRAMES + 1)
+
+    return None
 
 
 # ---------------------------------------------------------------------------
@@ -139,3 +173,31 @@ def detectar_inicio_movimento(
     offset = 0
 
     return _encontrar_inicio(suavizados, indices, offset)
+
+
+def detectar_fim_movimento(
+    keypoints_por_frame: list,
+    exercise: str,
+) -> int:
+    """
+    Retorna o índice (exclusivo) do último frame relevante do exercício.
+    Frames após esse índice são ociosos e podem ser descartados.
+    Se nenhum período ocioso for detectado no final, retorna len(keypoints_por_frame).
+    """
+    total = len(keypoints_por_frame)
+
+    if exercise not in ARTICULACAO_PRIMARIA:
+        return total
+
+    indices, angulos = _calcular_angulos_primarios(keypoints_por_frame, exercise)
+
+    if len(angulos) < _MIN_FRAMES:
+        return total
+
+    suavizados = _suavizar(angulos, JANELA_SUAVIZACAO)
+    frame_fim = _encontrar_fim(suavizados, indices)
+
+    if frame_fim is None:
+        return total
+
+    return min(total, frame_fim)
