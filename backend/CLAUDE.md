@@ -12,6 +12,7 @@ Leia também o `CLAUDE.md` na raiz do projeto para contexto geral.
 - OpenCV (`opencv-python-headless` — sem GUI)
 - NumPy
 - Pydantic v2 (vem com FastAPI)
+- PyAV (`av`) — encoding H.264 para o vídeo anotado (empacota FFmpeg próprio)
 
 ---
 
@@ -130,30 +131,69 @@ Orquestra o pipeline completo para um arquivo de vídeo.
 
 Função principal:
 
-- `processar_video(video_path: str, exercise: str) -> dict`
+- `processar_video(video_path: str, exercise: str, annotated_output_path: str | None = None) -> dict`
   Abre o vídeo com OpenCV, itera frame a frame, chama o MediaPipe,
   extrai keypoints, calcula ângulos e verifica postura.
+  Se `annotated_output_path` for fornecido, chama `anotar_video()` ao final
+  antes de retornar.
   Retorna o dict completo de resultado conforme o contrato da API.
+
+### `pipeline/video_annotator.py`
+
+Gera o vídeo anotado com esqueleto MediaPipe e articulações coloridas.
+
+Função principal:
+
+- `anotar_video(video_path, keypoints_completos, joint_results, exercise, fps, frame_inicio, frame_fim, output_path) -> None`
+  Re-lê o vídeo original frame a frame. Para frames dentro de
+  `[frame_inicio, frame_fim)` desenha o esqueleto com cores baseadas em
+  `joint_results` (verde = correto, vermelho = incorreto). Frames fora do
+  intervalo recebem esqueleto cinza neutro. Usa PyAV para gravar em H.264
+  (necessário para reprodução no browser — OpenCV só produz mp4v/MPEG-4 Part 2,
+  que os browsers não suportam).
+
+Função auxiliar (testável isoladamente):
+
+- `_construir_mapa_cor(exercise, joint_results) -> dict[int, tuple]`
+  Mapeia índice de landmark MediaPipe → cor BGR. Quando um landmark pertence
+  a múltiplas articulações (ex: quadril em `situp` aparece em `hip` e `spine`),
+  a primeira articulação listada em `_LANDMARKS_POR_ARTICULACAO` tem prioridade.
+
+Mapeamento articulação → landmarks por exercício:
+
+```python
+_LANDMARKS_POR_ARTICULACAO = {
+    "squat":  {"knee": [25, 26], "hip": [23, 24], "ankle": [27, 28, 31, 32]},
+    "pushup": {"elbow": [13, 14], "shoulder": [11, 12], "hip": [23, 24]},
+    "situp":  {"hip": [23, 24], "spine": [0, 11, 12, 23, 24]},
+}
+```
 
 ### `main.py`
 
-FastAPI com dois endpoints (`POST /analyze`, `GET /status/{job_id}`).
+FastAPI com três endpoints (`POST /analyze`, `GET /status/{job_id}`, `GET /video/{job_id}`).
 Jobs em memória (dict). Pipeline executado em thread separada via `threading.Thread`.
 Em produção futura, substituir por Celery + Redis.
 Serve os arquivos estáticos do front-end buildado (`frontend/dist/`) na rota `/`.
+
+O vídeo anotado é salvo em arquivo temporário via `tempfile.mkstemp` e persiste
+enquanto o processo estiver rodando. **Não é deletado automaticamente** — reiniciar
+o servidor limpa os arquivos temporários do SO. Não usar `mktemp` (deprecated).
 
 ---
 
 ## Fluxo interno do pipeline
 
 ```
-video_path + exercise
+video_path + exercise + annotated_output_path
         ↓
 video_processor.processar_video()
         ↓
   para cada frame:
     OpenCV lê o frame
     mediapipe_runner.extrair_keypoints()
+        ↓
+  salva keypoints_completos (todos os frames, antes do trim)
         ↓
   movement_detector.detectar_inicio_movimento()
   movement_detector.detectar_fim_movimento()
@@ -163,7 +203,10 @@ video_processor.processar_video()
         ↓
   postural_checker.verificar_{exercise}()
         ↓
-  retorna dict de resultado (inclui trimmed_start e trimmed_end)
+  [se annotated_output_path]
+  video_annotator.anotar_video()   ← re-lê vídeo, desenha com PyAV/H.264
+        ↓
+  retorna dict de resultado (inclui trimmed_start, trimmed_end, video_url)
 ```
 
 ---
@@ -233,7 +276,13 @@ mediapipe==0.10.20
 opencv-python-headless
 numpy
 python-dotenv
+av
 ```
+
+**Nota sobre codecs de vídeo:** `opencv-python-headless` não inclui H.264.
+O único codec MP4 disponível pelo OpenCV neste ambiente é `mp4v` (MPEG-4 Part 2),
+que browsers modernos não reproduzem. Por isso o vídeo anotado usa PyAV (`av`)
+que empacota seu próprio FFmpeg com suporte a H.264.
 
 ---
 
@@ -248,3 +297,7 @@ python-dotenv
   ela pertence ao `postural_checker.py`
 - Não usar `requirements.txt` com versões sem pin para o mediapipe —
   a API muda entre versões menores
+- Não usar `cv2.VideoWriter` com codec `mp4v` para vídeos destinados ao browser —
+  usar PyAV com `h264` (veja `video_annotator.py`)
+- Não usar `tempfile.mktemp` (deprecated) — usar `tempfile.mkstemp` e fechar o fd:
+  `fd, path = tempfile.mkstemp(suffix=".mp4"); os.close(fd)`

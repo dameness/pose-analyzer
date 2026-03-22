@@ -27,7 +27,7 @@ src/
     index.ts              # todas as interfaces TypeScript — fonte da verdade dos tipos
 
   services/
-    api.ts                # submitVideo() e getStatus() — únicas funções que tocam fetch
+    api.ts                # submitVideo(), getStatus(), buildVideoUrl() — únicas funções que tocam fetch
 
   hooks/
     useAnalysis.ts        # orquestra: upload → polling → resultado → reset
@@ -67,6 +67,7 @@ export interface AnalysisResult {
   joint_angles: Record<string, number[]>; // ex: { knee: [120, 118, 95] }
   joint_results: Record<string, 'correct' | 'incorrect'>; // ex: { knee: 'incorrect' }
   errors: string[];
+  video_url?: string; // caminho relativo ao backend, ex: "/video/{job_id}"
 }
 
 export type StatusResponse =
@@ -166,7 +167,15 @@ const mockResult: StatusResponse = {
 - Lista de JointFeedback para cada articulação
 - Lista de erros encontrados (se `errors.length > 0`)
 - AngleChart abaixo
+- Player de vídeo anotado inline (se `result.video_url` presente) + botão de download
 - Botão "Analisar novamente" que reseta o estado
+
+O campo `video_url` chega como caminho relativo ao backend (ex: `"/video/{job_id}"`).
+**Nunca** usar diretamente como `src` do `<video>` em desenvolvimento — o browser
+resolveria contra o Vite (`localhost:5173`), não o backend (`localhost:8000`).
+Sempre passar por `buildVideoUrl(video_url)` de `services/api.ts`, que prepende
+`VITE_API_URL`. Em produção (front servido pelo FastAPI), `VITE_API_URL` é `""`
+e o caminho relativo funciona normalmente.
 
 ---
 
@@ -267,3 +276,5 @@ Ao adicionar novos testes de hooks que dependem de APIs de browser, adicionar os
 - Não estilizar com `style={{}}` inline — usar classes Tailwind
 - Não mapear nomes de articulações do inglês para português dentro do back-end —
   essa tradução é responsabilidade do front-end
+- Não usar `result.video_url` diretamente como `src` de `<video>` — sempre passar
+  por `buildVideoUrl()` (corrige o problema de porta em desenvolvimento)

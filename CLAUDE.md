@@ -24,6 +24,7 @@ pose-analyzer/
       movement_detector.py   # detecta início/fim do movimento, descarta frames ociosos
       postural_checker.py    # lógica de correto/incorreto por exercício e articulação
       video_processor.py     # lê vídeo frame a frame via OpenCV, orquestra o pipeline
+      video_annotator.py     # desenha esqueleto + articulações coloridas, grava H.264
     models/
       __init__.py
       schemas.py             # Pydantic models para request/response da API
@@ -80,6 +81,13 @@ pose-analyzer/
 
 Consultado via polling a cada 2s até `status === "done"`.
 
+### GET /video/{job_id}
+
+Disponível após `status === "done"`. Retorna o arquivo `.mp4` anotado (H.264)
+para download ou exibição inline no browser.
+Retorna 404 se o job não existe, ainda não terminou ou o arquivo temporário
+foi removido (reinício do servidor).
+
 **Em processamento:**
 
 ```json
@@ -108,7 +116,8 @@ Consultado via polling a cada 2s até `status === "done"`.
       "hip": "correct",
       "ankle": "correct"
     },
-    "errors": ["joelho passando a ponta do pé"]
+    "errors": ["joelho passando a ponta do pé"],
+    "video_url": "/video/uuid-string"
   }
 }
 ```
