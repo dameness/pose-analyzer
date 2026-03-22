@@ -20,6 +20,7 @@ export interface AnalysisResult {
   joint_angles: JointAngles;
   joint_results: Record<string, 'correct' | 'incorrect'>;
   errors: string[];
+  video_url?: string;
 }
 
 export type StatusResponse =

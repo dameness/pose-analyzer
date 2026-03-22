@@ -30,6 +30,10 @@ export async function submitVideo(
   return response.json() as Promise<SubmitVideoResponse>;
 }
 
+export function buildVideoUrl(path: string): string {
+  return `${BASE_URL}${path}`;
+}
+
 export async function getStatus(jobId: string): Promise<StatusResponse> {
   if (!BASE_URL) {
     await delay(3000);

@@ -1,5 +1,6 @@
 import { CheckCircle2, XCircle, AlertTriangle, RotateCcw } from 'lucide-react';
 import type { AnalysisResultProps } from '../types';
+import { buildVideoUrl } from '../services/api';
 import { JointFeedback } from './JointFeedback';
 import { AngleChart } from './AngleChart';
 
@@ -94,7 +95,35 @@ export function AnalysisResult({ result, onReset }: AnalysisResultProps) {
         </div>
       )}
 
-      {/* 5. Reset button */}
+      {/* 5. Vídeo anotado */}
+      {result.video_url && (() => {
+        const videoSrc = buildVideoUrl(result.video_url);
+        return (
+          <div className="flex flex-col gap-3">
+            <h3 className="text-sm font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide">
+              Vídeo anotado
+            </h3>
+            <div className="rounded-2xl overflow-hidden border border-gray-200 dark:border-gray-700">
+              <video
+                src={videoSrc}
+                controls
+                className="w-full"
+              />
+            </div>
+            <div className="flex justify-center">
+              <a
+                href={videoSrc}
+                download="video_anotado.mp4"
+                className="flex items-center gap-2 px-4 py-2 rounded-xl border border-gray-300 dark:border-gray-600 text-sm font-medium text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors"
+              >
+                Baixar vídeo anotado
+              </a>
+            </div>
+          </div>
+        );
+      })()}
+
+      {/* 6. Reset button */}
       <div className="flex justify-center pt-2">
         <button
           type="button"

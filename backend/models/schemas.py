@@ -1,5 +1,5 @@
 from pydantic import BaseModel
-from typing import Literal, Union
+from typing import Literal, Optional, Union
 
 
 class AnalysisResult(BaseModel):
@@ -10,6 +10,7 @@ class AnalysisResult(BaseModel):
     joint_angles: dict[str, list[float]]
     joint_results: dict[str, Literal["correct", "incorrect"]]
     errors: list[str]
+    video_url: Optional[str] = None
 
 
 class JobQueued(BaseModel):

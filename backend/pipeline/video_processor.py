@@ -8,7 +8,7 @@ from pipeline.postural_checker import verificar_exercicio
 _MAX_DURACAO = int(os.getenv("MAX_VIDEO_DURATION_SECONDS", "30"))
 
 
-def processar_video(video_path: str, exercise: str) -> dict:
+def processar_video(video_path: str, exercise: str, annotated_output_path: str | None = None) -> dict:
     """
     Ponto de entrada do pipeline completo.
     Recebe o caminho do vídeo e o tipo de exercício.
@@ -52,6 +52,7 @@ def processar_video(video_path: str, exercise: str) -> dict:
     # Detectar início e fim do movimento e descartar frames ociosos
     frame_inicio = detectar_inicio_movimento(keypoints_por_frame, exercise)
     frame_fim = detectar_fim_movimento(keypoints_por_frame, exercise)
+    keypoints_completos = list(keypoints_por_frame)  # preserva todos os frames para anotação
     keypoints_por_frame = keypoints_por_frame[frame_inicio:frame_fim]
 
     frames_analisados = len([k for k in keypoints_por_frame if k is not None])
@@ -65,6 +66,13 @@ def processar_video(video_path: str, exercise: str) -> dict:
     confidence = sum(visibilidades) / len(visibilidades) if visibilidades else 0.0
 
     resultado = verificar_exercicio(exercise, keypoints_por_frame)
+
+    if annotated_output_path:
+        from pipeline.video_annotator import anotar_video
+        anotar_video(
+            video_path, keypoints_completos, resultado["joint_results"],
+            exercise, fps, frame_inicio, frame_fim, annotated_output_path,
+        )
 
     return {
         "exercise": exercise,

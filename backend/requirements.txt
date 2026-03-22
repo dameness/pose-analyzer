@@ -5,3 +5,4 @@ mediapipe==0.10.20
 opencv-python-headless
 numpy
 python-dotenv
+av
