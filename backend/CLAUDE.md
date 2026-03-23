@@ -180,6 +180,31 @@ O vídeo anotado é salvo em arquivo temporário via `tempfile.mkstemp` e persis
 enquanto o processo estiver rodando. **Não é deletado automaticamente** — reiniciar
 o servidor limpa os arquivos temporários do SO. Não usar `mktemp` (deprecated).
 
+**Validação síncrona no `/analyze`:**
+
+`POST /analyze` valida dois campos antes de enfileirar o job:
+
+- `exercise` — verificado contra `_EXERCICIOS_VALIDOS`. Se inválido, retorna **422** imediatamente.
+- `video` (content-type ou extensão) — verificado contra `_CONTENT_TYPES_VALIDOS` e `_EXTENSOES_VALIDAS`.
+  Se não reconhecido, retorna **415** imediatamente.
+
+`_EXERCICIOS_VALIDOS` deve ser mantido em sincronia com o dict `VERIFICADORES` em
+`pipeline/postural_checker.py`. Ao adicionar um novo exercício, atualizar **ambos**.
+
+Jobs criados com sucesso retornam **202 Accepted**.
+
+**Categorização de erros na thread de processamento:**
+
+O handler de exceções da thread diferencia três tipos:
+
+| Exceção         | `error_type`        | Causa típica                          |
+| --------------- | ------------------- | ------------------------------------- |
+| `ValueError`    | `validation_error`  | Vídeo muito longo, exercício inválido |
+| `RuntimeError`  | `invalid_file`      | OpenCV não conseguiu abrir o vídeo    |
+| `Exception`     | `processing_error`  | Erros inesperados de pipeline         |
+
+O campo `error_type` é retornado junto com `message` no `GET /status/{job_id}`.
+
 ---
 
 ## Fluxo interno do pipeline

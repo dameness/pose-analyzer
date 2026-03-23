@@ -71,7 +71,12 @@ pose-analyzer/
 - `video` — arquivo de vídeo (mp4, webm ou mov)
 - `exercise` — `"squat"` | `"situp"` | `"pushup"`
 
-**Response imediata** (não espera o processamento):
+**Validação síncrona** (retorna antes de enfileirar):
+
+- Exercício inválido → **422 Unprocessable Entity**
+- Formato de arquivo não suportado → **415 Unsupported Media Type**
+
+**Response de sucesso** — **202 Accepted** (não espera o processamento):
 
 ```json
 { "job_id": "uuid-string", "status": "queued" }
@@ -80,6 +85,8 @@ pose-analyzer/
 ### GET /status/{job_id}
 
 Consultado via polling a cada 2s até `status === "done"`.
+
+Retorna **404** se o job não existe.
 
 ### GET /video/{job_id}
 
@@ -122,11 +129,21 @@ foi removido (reinício do servidor).
 }
 ```
 
-**Erro:**
+**Erro no processamento** (job falhou após enfileirado):
 
 ```json
-{ "status": "error", "result": "mensagem de erro" }
+{
+  "status": "error",
+  "error_type": "validation_error" | "invalid_file" | "processing_error",
+  "message": "descrição do erro"
+}
 ```
+
+| `error_type`       | Causa                                                      |
+| ------------------ | ---------------------------------------------------------- |
+| `validation_error` | Vídeo muito longo ou exercício inválido detectado no pipeline |
+| `invalid_file`     | Arquivo corrompido ou ilegível pelo OpenCV/PyAV            |
+| `processing_error` | Erro inesperado no MediaPipe ou no pipeline de anotação    |
 
 ---
 

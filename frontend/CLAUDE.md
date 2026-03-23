@@ -73,7 +73,7 @@ export interface AnalysisResult {
 export type StatusResponse =
   | { status: 'processing' }
   | { status: 'done'; result: AnalysisResult }
-  | { status: 'error'; result: string };
+  | { status: 'error'; error_type: 'validation_error' | 'invalid_file' | 'processing_error'; message: string };
 ```
 
 ---
