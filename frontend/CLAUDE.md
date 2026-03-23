@@ -136,7 +136,8 @@ const mockResult: StatusResponse = {
 - Recebe `recorder` como prop (instância de `useVideoRecorder` criada em `Home.tsx`)
 - Gravar: acessa câmera via `getUserMedia`, botões iniciar / pausar / retomar / parar, preview ao vivo
 - Durante gravação: botão amarelo de pausa (Pause/Play) + botão vermelho de parar; badge "Pausado" visível quando pausado
-- Upload: input file aceitando `video/mp4,video/webm`
+- Upload: input file aceitando `video/mp4,video/webm,video/quicktime` (MP4, WebM, MOV)
+- Drag-and-drop valida por `f.type.startsWith('video/')` **e** por extensão (`.mp4`, `.webm`, `.mov`) — fallback necessário porque alguns sistemas operacionais não reportam o MIME type de arquivos `.mov` corretamente
 - Limite visual de 30 segundos na gravação (contador regressivo)
 - Após ter o vídeo (gravado ou uploaded), mostrar preview e botão "Analisar"
 

@@ -68,7 +68,7 @@ pose-analyzer/
 
 **Request:** `multipart/form-data`
 
-- `video` — arquivo de vídeo (mp4 ou webm)
+- `video` — arquivo de vídeo (mp4, webm ou mov)
 - `exercise` — `"squat"` | `"situp"` | `"pushup"`
 
 **Response imediata** (não espera o processamento):
