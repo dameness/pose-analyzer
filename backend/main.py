@@ -27,23 +27,42 @@ app.add_middleware(
 )
 
 # Armazena o estado de cada job em memória
-# { job_id: { "status": "queued"|"processing"|"done"|"error", "result": dict|str|None } }
+# { job_id: { "status": "queued"|"processing"|"done"|"error", "result": dict|None, "message": str|None, "error_type": str|None } }
 jobs: dict[str, dict] = {}
 
+_EXERCICIOS_VALIDOS = {"squat", "situp", "pushup"}
+# Manter sincronizado com VERIFICADORES em pipeline/postural_checker.py
 
-@app.post("/analyze", response_model=JobQueued)
+_CONTENT_TYPES_VALIDOS = {"video/mp4", "video/webm", "video/quicktime"}
+_EXTENSOES_VALIDAS = {".mp4", ".webm", ".mov"}
+
+
+@app.post("/analyze", response_model=JobQueued, status_code=202)
 async def analyze(
     video: UploadFile = File(...),
     exercise: str = Form(...),
 ):
+    if exercise not in _EXERCICIOS_VALIDOS:
+        raise HTTPException(
+            status_code=422,
+            detail=f"Exercício não suportado: '{exercise}'. Valores aceitos: {sorted(_EXERCICIOS_VALIDOS)}",
+        )
+
+    content_type = (video.content_type or "").lower()
+    extensao = os.path.splitext(video.filename or "")[1].lower()
+    if content_type not in _CONTENT_TYPES_VALIDOS and extensao not in _EXTENSOES_VALIDAS:
+        raise HTTPException(
+            status_code=415,
+            detail="Formato de vídeo não suportado. Envie um arquivo mp4, webm ou mov.",
+        )
+
     job_id = str(uuid.uuid4())
     jobs[job_id] = {"status": "queued", "result": None}
 
     conteudo = await video.read()
-    content_type = video.content_type or ""
     if "mp4" in content_type:
         sufixo = ".mp4"
-    elif "quicktime" in content_type or "mov" in content_type:
+    elif "quicktime" in content_type or extensao == ".mov":
         sufixo = ".mov"
     else:
         sufixo = ".webm"
@@ -63,9 +82,18 @@ async def analyze(
             jobs[job_id]["status"] = "done"
             jobs[job_id]["result"] = resultado
             jobs[job_id]["video_path"] = video_anotado_path
+        except ValueError as exc:
+            jobs[job_id]["status"] = "error"
+            jobs[job_id]["error_type"] = "validation_error"
+            jobs[job_id]["message"] = str(exc)
+        except RuntimeError as exc:
+            jobs[job_id]["status"] = "error"
+            jobs[job_id]["error_type"] = "invalid_file"
+            jobs[job_id]["message"] = str(exc)
         except Exception as exc:
             jobs[job_id]["status"] = "error"
-            jobs[job_id]["result"] = str(exc)
+            jobs[job_id]["error_type"] = "processing_error"
+            jobs[job_id]["message"] = str(exc)
         finally:
             if tmp_path and os.path.exists(tmp_path):
                 os.unlink(tmp_path)
@@ -83,7 +111,11 @@ def status(job_id: str):
     if job["status"] == "done":
         return {"status": "done", "result": job["result"]}
     if job["status"] == "error":
-        return {"status": "error", "result": job["result"]}
+        return {
+            "status": "error",
+            "error_type": job.get("error_type", "processing_error"),
+            "message": job.get("message", "Erro desconhecido"),
+        }
     return {"status": job["status"]}
 
 

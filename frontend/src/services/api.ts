@@ -24,7 +24,9 @@ export async function submitVideo(
   });
 
   if (!response.ok) {
-    throw new Error(`Erro ao enviar vídeo: ${response.status}`);
+    const body = await response.json().catch(() => null);
+    const detail = body?.detail ?? `HTTP ${response.status}`;
+    throw new Error(typeof detail === 'string' ? detail : JSON.stringify(detail));
   }
 
   return response.json() as Promise<SubmitVideoResponse>;

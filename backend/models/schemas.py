@@ -33,7 +33,8 @@ class JobStatusDone(BaseModel):
 
 class JobStatusError(BaseModel):
     status: Literal["error"]
-    result: str
+    error_type: Literal["validation_error", "invalid_file", "processing_error"]
+    message: str
 
 
 JobStatusResponse = Union[JobStatusQueued, JobStatusProcessing, JobStatusDone, JobStatusError]

@@ -48,7 +48,7 @@ export function useAnalysis(): {
           setState({ phase: 'done', jobId: job_id, result: status.result, error: null });
         } else if (status.status === 'error') {
           clearPolling();
-          setState({ phase: 'error', jobId: job_id, result: null, error: status.result });
+          setState({ phase: 'error', jobId: job_id, result: null, error: status.message });
         }
       } catch (err) {
         clearPolling();
