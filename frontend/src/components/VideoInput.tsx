@@ -227,7 +227,8 @@ function UploadMode({
   const dragOver = dragCounter > 0;
 
   function handleFile(f: File) {
-    if (!f.type.startsWith('video/')) return;
+    const isVideo = f.type.startsWith('video/') || /\.(mp4|webm|mov)$/i.test(f.name);
+    if (!isVideo) return;
     setFile(f);
   }
 
