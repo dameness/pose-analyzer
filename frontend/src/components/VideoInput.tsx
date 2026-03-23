@@ -255,7 +255,7 @@ function UploadMode({
     <input
       ref={inputRef}
       type="file"
-      accept="video/mp4,video/webm"
+      accept="video/mp4,video/webm,video/quicktime"
       className="hidden"
       onChange={handleChange}
       disabled={disabled}
@@ -286,7 +286,7 @@ function UploadMode({
         <p className="text-xs text-gray-500 dark:text-gray-400">
           ou clique para selecionar
         </p>
-        <p className="text-xs text-gray-400 dark:text-gray-500">MP4 ou WebM</p>
+        <p className="text-xs text-gray-400 dark:text-gray-500">MP4, WebM ou MOV</p>
       </div>
     );
   }

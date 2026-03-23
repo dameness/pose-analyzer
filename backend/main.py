@@ -41,7 +41,12 @@ async def analyze(
 
     conteudo = await video.read()
     content_type = video.content_type or ""
-    sufixo = ".mp4" if "mp4" in content_type else ".webm"
+    if "mp4" in content_type:
+        sufixo = ".mp4"
+    elif "quicktime" in content_type or "mov" in content_type:
+        sufixo = ".mov"
+    else:
+        sufixo = ".webm"
 
     def executar() -> None:
         jobs[job_id]["status"] = "processing"
