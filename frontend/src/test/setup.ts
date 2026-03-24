@@ -1,5 +1,5 @@
-import { vi } from 'vitest';
 import '@testing-library/react';
+import { vi } from 'vitest';
 
 // Mock MediaRecorder — rastreia a última instância criada
 class MockMediaRecorder {

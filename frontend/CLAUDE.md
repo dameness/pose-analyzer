@@ -57,23 +57,27 @@ src/
 ## Interfaces TypeScript (`types/index.ts`)
 
 ```typescript
-export type ExerciseType = 'squat' | 'situp' | 'pushup';
+export type ExerciseType = "squat" | "situp" | "pushup";
 
 export interface AnalysisResult {
   exercise: ExerciseType;
-  result: 'correct' | 'incorrect';
+  result: "correct" | "incorrect";
   confidence: number;
   frames_analyzed: number;
   joint_angles: Record<string, number[]>; // ex: { knee: [120, 118, 95] }
-  joint_results: Record<string, 'correct' | 'incorrect'>; // ex: { knee: 'incorrect' }
+  joint_results: Record<string, "correct" | "incorrect">; // ex: { knee: 'incorrect' }
   errors: string[];
   video_url?: string; // caminho relativo ao backend, ex: "/video/{job_id}"
 }
 
 export type StatusResponse =
-  | { status: 'processing' }
-  | { status: 'done'; result: AnalysisResult }
-  | { status: 'error'; error_type: 'validation_error' | 'invalid_file' | 'processing_error'; message: string };
+  | { status: "processing" }
+  | { status: "done"; result: AnalysisResult }
+  | {
+      status: "error";
+      error_type: "validation_error" | "invalid_file" | "processing_error";
+      message: string;
+    };
 ```
 
 ---
@@ -99,10 +103,10 @@ Mock de resultado definido em `services/api.ts`:
 
 ```typescript
 const mockResult: StatusResponse = {
-  status: 'done',
+  status: "done",
   result: {
-    exercise: 'squat',
-    result: 'incorrect',
+    exercise: "squat",
+    result: "incorrect",
     confidence: 0.87,
     frames_analyzed: 42,
     joint_angles: {
@@ -111,11 +115,11 @@ const mockResult: StatusResponse = {
       ankle: [90, 88, 85, 84],
     },
     joint_results: {
-      knee: 'incorrect',
-      hip: 'correct',
-      ankle: 'correct',
+      knee: "incorrect",
+      hip: "correct",
+      ankle: "correct",
     },
-    errors: ['joelho passando a ponta do pé'],
+    errors: ["joelho passando a ponta do pé"],
   },
 };
 ```
@@ -189,8 +193,8 @@ export type UseVideoRecorderReturn = {
   state: VideoRecorderState; // status: 'idle' | 'recording' | 'paused' | 'stopped'
   startRecording: () => Promise<void>;
   stopRecording: () => void;
-  pauseRecording: () => void;   // chama MediaRecorder.pause()
-  resumeRecording: () => void;  // chama MediaRecorder.resume()
+  pauseRecording: () => void; // chama MediaRecorder.pause()
+  resumeRecording: () => void; // chama MediaRecorder.resume()
   reset: () => void;
   streamRef: React.RefObject<MediaStream | null>;
 };
@@ -259,10 +263,23 @@ Configuração em `vitest.config.ts` (separado do `vite.config.ts` — não usa 
 O diretório `src/test/` é excluído do `tsconfig.app.json` para não poluir o build de produção.
 
 **`src/test/setup.ts`** — mocks globais registrados via `globalThis`:
+
 - `MockMediaRecorder`: implementa a interface do `MediaRecorder` (start/stop/pause/resume), rastreia última instância em `_lastInstance`
 - `navigator.mediaDevices.getUserMedia`: retorna uma stream fake com uma faixa de vídeo
 
 Ao adicionar novos testes de hooks que dependem de APIs de browser, adicionar os mocks necessários no `setup.ts`.
+
+---
+
+## Formatação
+
+Usar Prettier com a configuração em `src/.prettierrc.json`:
+
+```bash
+yarn prettier --write <arquivo>
+```
+
+Configuração relevante: `singleQuote`, `semi`, `tabWidth: 2`, `printWidth: 100`, `prettier-plugin-organize-imports`.
 
 ---
 

@@ -11,9 +11,11 @@ export function JointFeedback({ joint, correct }: JointFeedbackProps) {
           : 'bg-red-50 text-red-800 dark:bg-red-950/30 dark:text-red-300',
       ].join(' ')}
     >
-      {correct
-        ? <CheckCircle2 className="w-4 h-4 shrink-0" />
-        : <XCircle className="w-4 h-4 shrink-0" />}
+      {correct ? (
+        <CheckCircle2 className="w-4 h-4 shrink-0" />
+      ) : (
+        <XCircle className="w-4 h-4 shrink-0" />
+      )}
       <span>{joint}</span>
     </div>
   );

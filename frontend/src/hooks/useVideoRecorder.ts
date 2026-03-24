@@ -1,4 +1,4 @@
-import { useState, useRef, useEffect } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import type { VideoRecorderState } from '../types';
 
 function getSupportedMimeType(): string {
@@ -46,7 +46,7 @@ export function useVideoRecorder(): UseVideoRecorderReturn {
       mediaRecorderRef.current = null; // detach before onstop fires
     }
     if (streamRef.current) {
-      streamRef.current.getTracks().forEach(t => t.stop());
+      streamRef.current.getTracks().forEach((t) => t.stop());
       streamRef.current = null;
     }
     if (urlRef.current) {
@@ -63,7 +63,7 @@ export function useVideoRecorder(): UseVideoRecorderReturn {
     setState({ status: 'idle', videoBlob: null, videoUrl: null, error: null });
 
     if (!navigator.mediaDevices?.getUserMedia) {
-      setState(prev => ({
+      setState((prev) => ({
         ...prev,
         error: 'Câmera não disponível. Acesse via HTTPS ou use um navegador compatível.',
       }));
@@ -82,7 +82,7 @@ export function useVideoRecorder(): UseVideoRecorderReturn {
           : err instanceof DOMException && err.name === 'NotSupportedError'
           ? 'Câmera não suportada neste navegador. Tente usar Safari ou Chrome.'
           : 'Não foi possível acessar a câmera.';
-      setState(prev => ({ ...prev, error: message }));
+      setState((prev) => ({ ...prev, error: message }));
       return;
     }
 
@@ -101,7 +101,7 @@ export function useVideoRecorder(): UseVideoRecorderReturn {
       const url = URL.createObjectURL(blob);
       urlRef.current = url;
       if (streamRef.current) {
-        streamRef.current.getTracks().forEach(t => t.stop());
+        streamRef.current.getTracks().forEach((t) => t.stop());
         streamRef.current = null;
       }
       setState({ status: 'stopped', videoBlob: blob, videoUrl: url, error: null });
@@ -126,14 +126,14 @@ export function useVideoRecorder(): UseVideoRecorderReturn {
   function pauseRecording(): void {
     if (mediaRecorderRef.current && mediaRecorderRef.current.state === 'recording') {
       mediaRecorderRef.current.pause();
-      setState(prev => ({ ...prev, status: 'paused' }));
+      setState((prev) => ({ ...prev, status: 'paused' }));
     }
   }
 
   function resumeRecording(): void {
     if (mediaRecorderRef.current && mediaRecorderRef.current.state === 'paused') {
       mediaRecorderRef.current.resume();
-      setState(prev => ({ ...prev, status: 'recording' }));
+      setState((prev) => ({ ...prev, status: 'recording' }));
     }
   }
 
@@ -142,5 +142,13 @@ export function useVideoRecorder(): UseVideoRecorderReturn {
     setState(INITIAL_STATE);
   }
 
-  return { state, startRecording, stopRecording, pauseRecording, resumeRecording, reset, streamRef };
+  return {
+    state,
+    startRecording,
+    stopRecording,
+    pauseRecording,
+    resumeRecording,
+    reset,
+    streamRef,
+  };
 }

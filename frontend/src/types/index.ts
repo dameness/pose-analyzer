@@ -26,7 +26,11 @@ export interface AnalysisResult {
 export type StatusResponse =
   | { status: 'processing' }
   | { status: 'done'; result: AnalysisResult }
-  | { status: 'error'; error_type: 'validation_error' | 'invalid_file' | 'processing_error'; message: string };
+  | {
+      status: 'error';
+      error_type: 'validation_error' | 'invalid_file' | 'processing_error';
+      message: string;
+    };
 
 export type AnalysisPhase = 'idle' | 'uploading' | 'polling' | 'done' | 'error';
 

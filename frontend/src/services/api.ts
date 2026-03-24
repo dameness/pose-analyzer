@@ -1,8 +1,8 @@
-import type { ExerciseType, SubmitVideoResponse, StatusResponse } from '../types';
+import type { ExerciseType, StatusResponse, SubmitVideoResponse } from '../types';
 
 const BASE_URL = import.meta.env.VITE_API_URL ?? '';
 
-const delay = (ms: number) => new Promise<void>(resolve => setTimeout(resolve, ms));
+const delay = (ms: number) => new Promise<void>((resolve) => setTimeout(resolve, ms));
 
 export async function submitVideo(
   file: File,

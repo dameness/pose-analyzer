@@ -1,6 +1,6 @@
-import { useState, useRef, useEffect } from 'react';
+import { useEffect, useRef, useState } from 'react';
+import { getStatus, submitVideo } from '../services/api';
 import type { AnalysisState, ExerciseType } from '../types';
-import { submitVideo, getStatus } from '../services/api';
 
 const INITIAL_STATE: AnalysisState = {
   phase: 'idle',

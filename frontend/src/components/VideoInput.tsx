@@ -1,5 +1,5 @@
-import { useState, useRef, useEffect } from 'react';
-import { Pause, Play, Video, Upload } from 'lucide-react';
+import { Pause, Play, Upload, Video } from 'lucide-react';
+import { useEffect, useRef, useState } from 'react';
 import type { VideoInputProps } from '../types';
 
 type InputMode = 'record' | 'upload';
@@ -34,7 +34,15 @@ export function VideoInput({ recorder, onVideoReady, disabled = false }: VideoIn
               disabled ? 'cursor-not-allowed opacity-50' : 'cursor-pointer',
             ].join(' ')}
           >
-            {m === 'record' ? <><Video className="w-4 h-4" /> Gravar</> : <><Upload className="w-4 h-4" /> Upload</>}
+            {m === 'record' ? (
+              <>
+                <Video className="w-4 h-4" /> Gravar
+              </>
+            ) : (
+              <>
+                <Upload className="w-4 h-4" /> Upload
+              </>
+            )}
           </button>
         ))}
       </div>
@@ -78,14 +86,22 @@ function RecordMode({
   onVideoReady: (file: File) => void;
   disabled: boolean;
 }) {
-  const { state, startRecording, stopRecording, pauseRecording, resumeRecording, reset, streamRef } = recorder;
+  const {
+    state,
+    startRecording,
+    stopRecording,
+    pauseRecording,
+    resumeRecording,
+    reset,
+    streamRef,
+  } = recorder;
   const [elapsed, setElapsed] = useState(0);
   const elapsedRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
   useEffect(() => {
     if (state.status === 'recording') {
       setElapsed(0);
-      elapsedRef.current = setInterval(() => setElapsed(s => s + 1), 1000);
+      elapsedRef.current = setInterval(() => setElapsed((s) => s + 1), 1000);
     } else {
       if (elapsedRef.current) {
         clearInterval(elapsedRef.current);
@@ -120,9 +136,7 @@ function RecordMode({
         <p className="text-sm text-gray-400 text-center">
           Posicione-se de modo que seu corpo inteiro fique visível na câmera.
         </p>
-        {state.error && (
-          <p className="text-sm text-red-400 text-center">{state.error}</p>
-        )}
+        {state.error && <p className="text-sm text-red-400 text-center">{state.error}</p>}
         <button
           type="button"
           onClick={startRecording}
@@ -141,9 +155,7 @@ function RecordMode({
       <div className="flex flex-col items-center gap-3 bg-gray-900 rounded-2xl overflow-hidden">
         <LivePreview streamRef={streamRef} />
         <div className="flex flex-col items-center gap-3 pb-4">
-          <span className="text-white font-mono text-sm">
-            {formatTime(elapsed)} / 00:30
-          </span>
+          <span className="text-white font-mono text-sm">{formatTime(elapsed)} / 00:30</span>
           {pausado && (
             <span className="text-xs text-yellow-400 font-semibold uppercase tracking-wide">
               Pausado
@@ -158,10 +170,11 @@ function RecordMode({
               className="w-12 h-12 rounded-full bg-yellow-500 hover:bg-yellow-400 flex items-center justify-center transition-colors disabled:opacity-50 cursor-pointer"
               aria-label={pausado ? 'Retomar gravação' : 'Pausar gravação'}
             >
-              {pausado
-                ? <Play className="w-5 h-5 text-white fill-white" />
-                : <Pause className="w-5 h-5 text-white fill-white" />
-              }
+              {pausado ? (
+                <Play className="w-5 h-5 text-white fill-white" />
+              ) : (
+                <Pause className="w-5 h-5 text-white fill-white" />
+              )}
             </button>
             {/* Botão parar */}
             <button
@@ -183,15 +196,9 @@ function RecordMode({
   return (
     <div className="flex flex-col gap-3">
       {state.videoUrl && (
-        <video
-          src={state.videoUrl}
-          controls
-          className="w-full rounded-2xl bg-gray-900 max-h-72"
-        />
+        <video src={state.videoUrl} controls className="w-full rounded-2xl bg-gray-900 max-h-72" />
       )}
-      {state.error && (
-        <p className="text-sm text-red-500">{state.error}</p>
-      )}
+      {state.error && <p className="text-sm text-red-500">{state.error}</p>}
       <div className="flex gap-3">
         <button
           type="button"
@@ -266,9 +273,12 @@ function UploadMode({
   if (!file) {
     return (
       <div
-        onDragEnter={(e) => { e.preventDefault(); setDragCounter(c => c + 1); }}
+        onDragEnter={(e) => {
+          e.preventDefault();
+          setDragCounter((c) => c + 1);
+        }}
         onDragOver={(e) => e.preventDefault()}
-        onDragLeave={() => setDragCounter(c => c - 1)}
+        onDragLeave={() => setDragCounter((c) => c - 1)}
         onDrop={handleDrop}
         onClick={() => !disabled && inputRef.current?.click()}
         className={[
@@ -284,9 +294,7 @@ function UploadMode({
         <p className="text-sm font-semibold text-gray-700 dark:text-gray-300">
           Arraste um vídeo aqui
         </p>
-        <p className="text-xs text-gray-500 dark:text-gray-400">
-          ou clique para selecionar
-        </p>
+        <p className="text-xs text-gray-500 dark:text-gray-400">ou clique para selecionar</p>
         <p className="text-xs text-gray-400 dark:text-gray-500">MP4, WebM ou MOV</p>
       </div>
     );
@@ -298,7 +306,9 @@ function UploadMode({
       <div className="flex items-center gap-3 p-4 bg-gray-50 dark:bg-gray-800 rounded-2xl border border-gray-200 dark:border-gray-700">
         <span className="text-2xl shrink-0">🎬</span>
         <div className="flex-1 min-w-0">
-          <p className="text-sm font-semibold text-gray-800 dark:text-gray-100 truncate">{file.name}</p>
+          <p className="text-sm font-semibold text-gray-800 dark:text-gray-100 truncate">
+            {file.name}
+          </p>
           <p className="text-xs text-gray-500 dark:text-gray-400">{formatSize(file.size)}</p>
         </div>
       </div>

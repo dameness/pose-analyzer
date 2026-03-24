@@ -1,8 +1,8 @@
-import { CheckCircle2, XCircle, AlertTriangle, RotateCcw } from 'lucide-react';
-import type { AnalysisResultProps } from '../types';
+import { AlertTriangle, CheckCircle2, RotateCcw, XCircle } from 'lucide-react';
 import { buildVideoUrl } from '../services/api';
-import { JointFeedback } from './JointFeedback';
+import type { AnalysisResultProps } from '../types';
 import { AngleChart } from './AngleChart';
+import { JointFeedback } from './JointFeedback';
 
 const NOME_ARTICULACAO: Record<string, string> = {
   knee: 'joelho',
@@ -20,25 +20,22 @@ export function AnalysisResult({ result, onReset }: AnalysisResultProps) {
 
   return (
     <div className="flex flex-col gap-6">
-
       {/* 1. Verdict header */}
       <div
         className={[
           'flex flex-col items-center gap-2 rounded-2xl px-6 py-6 text-center',
-          correct
-            ? 'bg-green-50 dark:bg-green-950/30'
-            : 'bg-red-50 dark:bg-red-950/30',
+          correct ? 'bg-green-50 dark:bg-green-950/30' : 'bg-red-50 dark:bg-red-950/30',
         ].join(' ')}
       >
-        {correct
-          ? <CheckCircle2 className="w-10 h-10 text-green-600 dark:text-green-400" />
-          : <XCircle className="w-10 h-10 text-red-600 dark:text-red-400" />}
+        {correct ? (
+          <CheckCircle2 className="w-10 h-10 text-green-600 dark:text-green-400" />
+        ) : (
+          <XCircle className="w-10 h-10 text-red-600 dark:text-red-400" />
+        )}
         <p
           className={[
             'text-xl font-bold',
-            correct
-              ? 'text-green-800 dark:text-green-300'
-              : 'text-red-800 dark:text-red-300',
+            correct ? 'text-green-800 dark:text-green-300' : 'text-red-800 dark:text-red-300',
           ].join(' ')}
         >
           {correct ? 'Execução Correta' : 'Execução Incorreta'}
@@ -54,7 +51,7 @@ export function AnalysisResult({ result, onReset }: AnalysisResultProps) {
           Articulações
         </h3>
         <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
-          {joints.map(joint => (
+          {joints.map((joint) => (
             <JointFeedback
               key={joint}
               joint={NOME_ARTICULACAO[joint] ?? joint}
@@ -96,32 +93,29 @@ export function AnalysisResult({ result, onReset }: AnalysisResultProps) {
       )}
 
       {/* 5. Vídeo anotado */}
-      {result.video_url && (() => {
-        const videoSrc = buildVideoUrl(result.video_url);
-        return (
-          <div className="flex flex-col gap-3">
-            <h3 className="text-sm font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide">
-              Vídeo anotado
-            </h3>
-            <div className="rounded-2xl overflow-hidden border border-gray-200 dark:border-gray-700">
-              <video
-                src={videoSrc}
-                controls
-                className="w-full"
-              />
+      {result.video_url &&
+        (() => {
+          const videoSrc = buildVideoUrl(result.video_url);
+          return (
+            <div className="flex flex-col gap-3">
+              <h3 className="text-sm font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide">
+                Vídeo anotado
+              </h3>
+              <div className="rounded-2xl overflow-hidden border border-gray-200 dark:border-gray-700">
+                <video src={videoSrc} controls className="w-full" />
+              </div>
+              <div className="flex justify-center">
+                <a
+                  href={videoSrc}
+                  download="video_anotado.mp4"
+                  className="flex items-center gap-2 px-4 py-2 rounded-xl border border-gray-300 dark:border-gray-600 text-sm font-medium text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors"
+                >
+                  Baixar vídeo anotado
+                </a>
+              </div>
             </div>
-            <div className="flex justify-center">
-              <a
-                href={videoSrc}
-                download="video_anotado.mp4"
-                className="flex items-center gap-2 px-4 py-2 rounded-xl border border-gray-300 dark:border-gray-600 text-sm font-medium text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors"
-              >
-                Baixar vídeo anotado
-              </a>
-            </div>
-          </div>
-        );
-      })()}
+          );
+        })()}
 
       {/* 6. Reset button */}
       <div className="flex justify-center pt-2">
@@ -134,7 +128,6 @@ export function AnalysisResult({ result, onReset }: AnalysisResultProps) {
           Analisar novamente
         </button>
       </div>
-
     </div>
   );
 }
