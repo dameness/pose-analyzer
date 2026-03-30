@@ -21,6 +21,7 @@ pose-analyzer/
       __init__.py
       mediapipe_runner.py    # inicializa o Pose, processa frames, extrai keypoints
       angle_calculator.py    # calcular_angulo() — lógica de ângulos entre keypoints
+      side_detector.py       # detecta lado da gravação (esquerdo/direito), rejeita frontal
       movement_detector.py   # detecta início/fim do movimento, descarta frames ociosos
       postural_checker.py    # lógica de correto/incorreto por exercício e articulação
       video_processor.py     # lê vídeo frame a frame via OpenCV, orquestra o pipeline
@@ -124,7 +125,8 @@ foi removido (reinício do servidor).
       "ankle": "correct"
     },
     "errors": ["joelho passando a ponta do pé"],
-    "video_url": "/video/uuid-string"
+    "video_url": "/video/uuid-string",
+    "detected_side": "left"
   }
 }
 ```
@@ -141,7 +143,7 @@ foi removido (reinício do servidor).
 
 | `error_type`       | Causa                                                      |
 | ------------------ | ---------------------------------------------------------- |
-| `validation_error` | Vídeo muito longo ou exercício inválido detectado no pipeline |
+| `validation_error` | Vídeo muito longo, exercício inválido, ou gravação frontal detectada |
 | `invalid_file`     | Arquivo corrompido ou ilegível pelo OpenCV/PyAV            |
 | `processing_error` | Erro inesperado no MediaPipe ou no pipeline de anotação    |
 

@@ -59,6 +59,38 @@ Funções existentes (migradas do Colab):
   na articulação p2 (vértice). Usa produto escalar via NumPy.
   Fórmula: arccos(dot(AB, CB) / (|AB| \* |CB|))
 
+### `pipeline/side_detector.py`
+
+Detecção automática do lado de gravação (esquerdo, direito ou frontal).
+Analisa a visibilidade dos keypoints pareados (esquerdo vs direito) ao longo
+de múltiplos frames para determinar de qual lado o usuário foi gravado.
+
+Função:
+
+- `detectar_lado(keypoints_por_frame) -> str`
+  Retorna `"left"` ou `"right"`. Levanta `ValueError` se a gravação for
+  frontal (visibilidade semelhante em ambos os lados) ou se houver poucos
+  frames com pose detectada.
+
+Algoritmo:
+1. Para cada frame, calcula a média de visibilidade dos 5 pares de keypoints
+   (ombro, cotovelo, quadril, joelho, tornozelo) de cada lado
+2. Calcula a razão `média_esq / média_dir` por frame
+3. Toma a **mediana** das razões (robusta contra outliers)
+4. Se `mediana > RATIO_LIMIAR` → esquerdo; se `< 1/RATIO_LIMIAR` → direito;
+   caso contrário → frontal (ValueError)
+
+Constantes de configuração:
+
+```python
+RATIO_LIMIAR = 1.4          # razão mínima para considerar um lado dominante
+_MIN_FRAMES_DETECCAO = 5    # mínimo de frames válidos para decidir
+```
+
+**Importante:** gravações frontais são rejeitadas com `ValueError`, que o
+handler de exceções em `main.py` mapeia automaticamente para
+`error_type: "validation_error"`. Não é necessário alterar `main.py`.
+
 ### `pipeline/movement_detector.py`
 
 Pré-processamento — detecta onde o exercício começa e termina no vídeo,
@@ -66,16 +98,20 @@ descartando frames ociosos no início e no final da gravação.
 
 Funções:
 
-- `detectar_inicio_movimento(keypoints_por_frame, exercise) -> int`
+- `detectar_inicio_movimento(keypoints_por_frame, exercise, side="left") -> int`
   Retorna o índice do primeiro frame relevante. Calcula o ângulo da
   articulação primária do exercício em cada frame, suaviza com moving
   average (janela=5), e procura o primeiro trecho de 5 frames consecutivos
   com queda acumulada >= 15°. Retorna 0 se nenhum movimento for detectado.
-- `detectar_fim_movimento(keypoints_por_frame, exercise) -> int`
+- `detectar_fim_movimento(keypoints_por_frame, exercise, side="left") -> int`
   Retorna o índice (exclusivo) do último frame relevante. Varre a série
   suavizada de trás para frente procurando o último trecho com variação
   angular significativa. Retorna `len(keypoints_por_frame)` se não houver
   idle no final.
+
+O parâmetro `side` (`"left"` ou `"right"`) determina quais keypoints são
+usados para calcular o ângulo da articulação primária, via `KEYPOINTS_POR_LADO`
+de `postural_checker.py`.
 
 Constantes de configuração (topo do arquivo):
 
@@ -88,9 +124,12 @@ LOOKBACK_FRAMES = 3           # margem de segurança antes/depois do ponto detec
 
 Articulação primária por exercício (a que mais muda durante o movimento):
 
-- squat → joelho (QUADRIL_ESQ → JOELHO_ESQ → TORNOZELO_ESQ)
-- pushup → cotovelo (OMBRO_ESQ → COTOVELO_ESQ → PULSO_ESQ)
-- situp → quadril (OMBRO_ESQ → QUADRIL_ESQ → JOELHO_ESQ)
+- squat → joelho (quadril → joelho → tornozelo)
+- pushup → cotovelo (ombro → cotovelo → pulso)
+- situp → quadril (ombro → quadril → joelho)
+
+Os índices concretos são resolvidos em runtime pela função interna
+`_articulacao_primaria(exercise, side)` com base no `KEYPOINTS_POR_LADO`.
 
 **Importante:** não colocar lógica de limiares posturais neste módulo —
 ele trata apenas da detecção temporal (quando começa/termina), não da
@@ -101,12 +140,17 @@ correção do movimento.
 Lógica de negócio — define o que é correto/incorreto para cada exercício.
 Este é o módulo que mais vai crescer ao longo do TCC.
 
-Estrutura esperada:
+Estrutura:
 
 - Uma função por exercício: `verificar_squat`, `verificar_situp`, `verificar_pushup`
-- Cada função recebe a lista de keypoints e retorna um dict com resultado por articulação
+- Cada função recebe a lista de keypoints e `side` (`"left"` ou `"right"`, default `"left"`)
+  e retorna um dict com resultado por articulação
 - Os limiares de ângulo (ex: joelho deve estar entre 80° e 100° no ponto baixo)
   devem ser constantes nomeadas no topo do arquivo, não números mágicos
+- `KEYPOINTS_POR_LADO` mapeia `"left"`/`"right"` → nomes abstratos de articulação →
+  índices concretos de keypoints MediaPipe. As funções de verificação usam esse
+  mapeamento para selecionar os keypoints do lado correto
+- `verificar_exercicio(exercise, keypoints_por_frame, side="left")` é o dispatcher
 
 **Importante — keys do resultado em inglês:**
 Os dicts `joint_angles` e `joint_results` retornados pela API devem usar keys em inglês,
@@ -133,10 +177,12 @@ Função principal:
 
 - `processar_video(video_path: str, exercise: str, annotated_output_path: str | None = None) -> dict`
   Abre o vídeo com OpenCV, itera frame a frame, chama o MediaPipe,
-  extrai keypoints, calcula ângulos e verifica postura.
+  extrai keypoints, detecta o lado da gravação (levanta `ValueError` se frontal),
+  calcula ângulos e verifica postura usando os keypoints do lado detectado.
   Se `annotated_output_path` for fornecido, chama `anotar_video()` ao final
   antes de retornar.
-  Retorna o dict completo de resultado conforme o contrato da API.
+  Retorna o dict completo de resultado conforme o contrato da API
+  (inclui `detected_side`).
 
 ### `pipeline/video_annotator.py`
 
@@ -199,7 +245,7 @@ O handler de exceções da thread diferencia três tipos:
 
 | Exceção         | `error_type`        | Causa típica                          |
 | --------------- | ------------------- | ------------------------------------- |
-| `ValueError`    | `validation_error`  | Vídeo muito longo, exercício inválido |
+| `ValueError`    | `validation_error`  | Vídeo muito longo, exercício inválido, gravação frontal |
 | `RuntimeError`  | `invalid_file`      | OpenCV não conseguiu abrir o vídeo    |
 | `Exception`     | `processing_error`  | Erros inesperados de pipeline         |
 
@@ -220,18 +266,20 @@ video_processor.processar_video()
         ↓
   salva keypoints_completos (todos os frames, antes do trim)
         ↓
-  movement_detector.detectar_inicio_movimento()
-  movement_detector.detectar_fim_movimento()
+  side_detector.detectar_lado()   ← retorna "left"/"right" ou ValueError se frontal
+        ↓
+  movement_detector.detectar_inicio_movimento(side=side)
+  movement_detector.detectar_fim_movimento(side=side)
   recorta keypoints_por_frame[inicio:fim]
         ↓
   calcula confiança e conta frames analisados
         ↓
-  postural_checker.verificar_{exercise}()
+  postural_checker.verificar_{exercise}(side=side)
         ↓
   [se annotated_output_path]
   video_annotator.anotar_video()   ← re-lê vídeo, desenha com PyAV/H.264
         ↓
-  retorna dict de resultado (inclui trimmed_start, trimmed_end, video_url)
+  retorna dict de resultado (inclui trimmed_start, trimmed_end, detected_side, video_url)
 ```
 
 ---

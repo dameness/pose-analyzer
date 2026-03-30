@@ -68,6 +68,7 @@ export interface AnalysisResult {
   joint_results: Record<string, "correct" | "incorrect">; // ex: { knee: 'incorrect' }
   errors: string[];
   video_url?: string; // caminho relativo ao backend, ex: "/video/{job_id}"
+  detected_side?: "left" | "right"; // lado da gravação detectado automaticamente
 }
 
 export type StatusResponse =
