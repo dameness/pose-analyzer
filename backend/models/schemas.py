@@ -11,6 +11,7 @@ class AnalysisResult(BaseModel):
     joint_results: dict[str, Literal["correct", "incorrect"]]
     errors: list[str]
     video_url: Optional[str] = None
+    detected_side: Optional[Literal["left", "right"]] = None
 
 
 class JobQueued(BaseModel):

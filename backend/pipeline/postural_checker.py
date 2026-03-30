@@ -17,6 +17,33 @@ JOELHO_DIR   = 26
 TORNOZELO_ESQ = 27
 TORNOZELO_DIR = 28
 INDICE_PE_ESQ = 31
+INDICE_PE_DIR = 32
+PULSO_DIR     = 16
+
+# ---------------------------------------------------------------------------
+# Mapeamento lado → índices de keypoints
+# ---------------------------------------------------------------------------
+
+KEYPOINTS_POR_LADO = {
+    "left": {
+        "ombro": OMBRO_ESQ,
+        "cotovelo": COTOVELO_ESQ,
+        "pulso": PULSO_ESQ,
+        "quadril": QUADRIL_ESQ,
+        "joelho": JOELHO_ESQ,
+        "tornozelo": TORNOZELO_ESQ,
+        "indice_pe": INDICE_PE_ESQ,
+    },
+    "right": {
+        "ombro": OMBRO_DIR,
+        "cotovelo": COTOVELO_DIR,
+        "pulso": PULSO_DIR,
+        "quadril": QUADRIL_DIR,
+        "joelho": JOELHO_DIR,
+        "tornozelo": TORNOZELO_DIR,
+        "indice_pe": INDICE_PE_DIR,
+    },
+}
 
 # ---------------------------------------------------------------------------
 # Limiares posturais — ajustar após validação com especialistas
@@ -59,12 +86,14 @@ def _ponto_medio(p1: dict, p2: dict) -> dict:
 # Funções de verificação por exercício
 # ---------------------------------------------------------------------------
 
-def verificar_squat(keypoints_por_frame: list[list[dict] | None]) -> dict:
+def verificar_squat(keypoints_por_frame: list[list[dict] | None], side: str = "left") -> dict:
     """
     Recebe a lista de keypoints de cada frame do vídeo.
     Retorna dict com ângulos por frame e resultado por articulação.
     Articulações analisadas: joelho, quadril, tornozelo.
     """
+    kp = KEYPOINTS_POR_LADO[side]
+
     angulos_joelho    = []
     angulos_quadril   = []
     angulos_tornozelo = []
@@ -74,19 +103,19 @@ def verificar_squat(keypoints_por_frame: list[list[dict] | None]) -> dict:
             continue
 
         angulo_joelho = calcular_angulo(
-            keypoints[QUADRIL_ESQ],
-            keypoints[JOELHO_ESQ],
-            keypoints[TORNOZELO_ESQ]
+            keypoints[kp["quadril"]],
+            keypoints[kp["joelho"]],
+            keypoints[kp["tornozelo"]]
         )
         angulo_quadril = calcular_angulo(
-            keypoints[OMBRO_ESQ],
-            keypoints[QUADRIL_ESQ],
-            keypoints[JOELHO_ESQ]
+            keypoints[kp["ombro"]],
+            keypoints[kp["quadril"]],
+            keypoints[kp["joelho"]]
         )
         angulo_tornozelo = calcular_angulo(
-            keypoints[JOELHO_ESQ],
-            keypoints[TORNOZELO_ESQ],
-            keypoints[INDICE_PE_ESQ]
+            keypoints[kp["joelho"]],
+            keypoints[kp["tornozelo"]],
+            keypoints[kp["indice_pe"]]
         )
 
         angulos_joelho.append(angulo_joelho)
@@ -138,11 +167,13 @@ def verificar_squat(keypoints_por_frame: list[list[dict] | None]) -> dict:
     }
 
 
-def verificar_pushup(keypoints_por_frame: list[list[dict] | None]) -> dict:
+def verificar_pushup(keypoints_por_frame: list[list[dict] | None], side: str = "left") -> dict:
     """
     Verifica a execução de flexões (push-up).
     Articulações analisadas: cotovelo, ombro, quadril.
     """
+    kp = KEYPOINTS_POR_LADO[side]
+
     angulos_cotovelo = []
     angulos_ombro    = []
     angulos_quadril  = []
@@ -152,19 +183,19 @@ def verificar_pushup(keypoints_por_frame: list[list[dict] | None]) -> dict:
             continue
 
         angulo_cotovelo = calcular_angulo(
-            keypoints[OMBRO_ESQ],
-            keypoints[COTOVELO_ESQ],
-            keypoints[PULSO_ESQ]
+            keypoints[kp["ombro"]],
+            keypoints[kp["cotovelo"]],
+            keypoints[kp["pulso"]]
         )
         angulo_ombro = calcular_angulo(
-            keypoints[COTOVELO_ESQ],
-            keypoints[OMBRO_ESQ],
-            keypoints[QUADRIL_ESQ]
+            keypoints[kp["cotovelo"]],
+            keypoints[kp["ombro"]],
+            keypoints[kp["quadril"]]
         )
         angulo_quadril = calcular_angulo(
-            keypoints[OMBRO_ESQ],
-            keypoints[QUADRIL_ESQ],
-            keypoints[JOELHO_ESQ]
+            keypoints[kp["ombro"]],
+            keypoints[kp["quadril"]],
+            keypoints[kp["joelho"]]
         )
 
         angulos_cotovelo.append(angulo_cotovelo)
@@ -213,12 +244,14 @@ def verificar_pushup(keypoints_por_frame: list[list[dict] | None]) -> dict:
     }
 
 
-def verificar_situp(keypoints_por_frame: list[list[dict] | None]) -> dict:
+def verificar_situp(keypoints_por_frame: list[list[dict] | None], side: str = "left") -> dict:
     """
     Verifica a execução de abdominais (sit-up).
     Articulações analisadas: quadril, coluna.
     A coluna é aproximada pelo ângulo nariz → centro_ombros → centro_quadris.
     """
+    kp = KEYPOINTS_POR_LADO[side]
+
     angulos_quadril = []
     angulos_coluna  = []
 
@@ -227,9 +260,9 @@ def verificar_situp(keypoints_por_frame: list[list[dict] | None]) -> dict:
             continue
 
         angulo_quadril = calcular_angulo(
-            keypoints[OMBRO_ESQ],
-            keypoints[QUADRIL_ESQ],
-            keypoints[JOELHO_ESQ]
+            keypoints[kp["ombro"]],
+            keypoints[kp["quadril"]],
+            keypoints[kp["joelho"]]
         )
 
         centro_ombros  = _ponto_medio(keypoints[OMBRO_ESQ], keypoints[OMBRO_DIR])
@@ -290,7 +323,7 @@ VERIFICADORES = {
 }
 
 
-def verificar_exercicio(exercise: str, keypoints_por_frame: list) -> dict:
+def verificar_exercicio(exercise: str, keypoints_por_frame: list, side: str = "left") -> dict:
     """
     Ponto de entrada do postural_checker.
     Recebe o tipo de exercício e os keypoints de todos os frames.
@@ -298,7 +331,7 @@ def verificar_exercicio(exercise: str, keypoints_por_frame: list) -> dict:
     verificador = VERIFICADORES.get(exercise)
     if verificador is None:
         raise ValueError(f"Exercício não suportado: {exercise}")
-    return verificador(keypoints_por_frame)
+    return verificador(keypoints_por_frame, side)
 
 
 def _resultado_vazio() -> dict:

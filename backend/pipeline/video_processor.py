@@ -4,6 +4,7 @@ import cv2
 from pipeline.mediapipe_runner import inicializar_pose, extrair_keypoints
 from pipeline.movement_detector import detectar_fim_movimento, detectar_inicio_movimento
 from pipeline.postural_checker import verificar_exercicio
+from pipeline.side_detector import detectar_lado
 
 _MAX_DURACAO = int(os.getenv("MAX_VIDEO_DURATION_SECONDS", "30"))
 
@@ -49,9 +50,12 @@ def processar_video(video_path: str, exercise: str, annotated_output_path: str |
         cap.release()
         pose.close()
 
+    # Detectar lado da gravação (levanta ValueError se frontal)
+    side = detectar_lado(keypoints_por_frame)
+
     # Detectar início e fim do movimento e descartar frames ociosos
-    frame_inicio = detectar_inicio_movimento(keypoints_por_frame, exercise)
-    frame_fim = detectar_fim_movimento(keypoints_por_frame, exercise)
+    frame_inicio = detectar_inicio_movimento(keypoints_por_frame, exercise, side)
+    frame_fim = detectar_fim_movimento(keypoints_por_frame, exercise, side)
     keypoints_completos = list(keypoints_por_frame)  # preserva todos os frames para anotação
     keypoints_por_frame = keypoints_por_frame[frame_inicio:frame_fim]
 
@@ -65,7 +69,7 @@ def processar_video(video_path: str, exercise: str, annotated_output_path: str |
     ]
     confidence = sum(visibilidades) / len(visibilidades) if visibilidades else 0.0
 
-    resultado = verificar_exercicio(exercise, keypoints_por_frame)
+    resultado = verificar_exercicio(exercise, keypoints_por_frame, side)
 
     if annotated_output_path:
         from pipeline.video_annotator import anotar_video
@@ -80,5 +84,6 @@ def processar_video(video_path: str, exercise: str, annotated_output_path: str |
         "frames_analyzed": frames_analisados,
         "trimmed_start": frame_inicio,
         "trimmed_end": frame_fim,
+        "detected_side": side,
         **resultado,  # result, joint_angles, joint_results, errors
     }

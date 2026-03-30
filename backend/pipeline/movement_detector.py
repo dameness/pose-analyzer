@@ -7,14 +7,7 @@ ociosos no início e no final da gravação.
 """
 
 from pipeline.angle_calculator import calcular_angulo
-from pipeline.postural_checker import (
-    COTOVELO_ESQ,
-    JOELHO_ESQ,
-    OMBRO_ESQ,
-    PULSO_ESQ,
-    QUADRIL_ESQ,
-    TORNOZELO_ESQ,
-)
+from pipeline.postural_checker import KEYPOINTS_POR_LADO
 
 # ---------------------------------------------------------------------------
 # Constantes de configuração
@@ -25,12 +18,15 @@ FRAMES_CONSECUTIVOS = 5       # frames seguidos com ângulo diminuindo
 DELTA_ACUMULADO_MINIMO = 15.0 # graus de variação acumulada mínima na janela
 LOOKBACK_FRAMES = 3           # margem antes do ponto detectado
 
-# Articulação primária por exercício — (p1, p2_vertice, p3)
-ARTICULACAO_PRIMARIA = {
-    "squat":  (QUADRIL_ESQ, JOELHO_ESQ, TORNOZELO_ESQ),
-    "pushup": (OMBRO_ESQ, COTOVELO_ESQ, PULSO_ESQ),
-    "situp":  (OMBRO_ESQ, QUADRIL_ESQ, JOELHO_ESQ),
-}
+def _articulacao_primaria(exercise: str, side: str = "left") -> tuple[int, int, int]:
+    """Retorna os índices (p1, p2_vertice, p3) da articulação primária do exercício."""
+    kp = KEYPOINTS_POR_LADO[side]
+    mapa = {
+        "squat":  (kp["quadril"],  kp["joelho"],   kp["tornozelo"]),
+        "pushup": (kp["ombro"],    kp["cotovelo"], kp["pulso"]),
+        "situp":  (kp["ombro"],    kp["quadril"],  kp["joelho"]),
+    }
+    return mapa[exercise]
 
 # Mínimo de frames necessários para tentar a detecção
 _MIN_FRAMES = JANELA_SUAVIZACAO + FRAMES_CONSECUTIVOS
@@ -43,12 +39,13 @@ _MIN_FRAMES = JANELA_SUAVIZACAO + FRAMES_CONSECUTIVOS
 def _calcular_angulos_primarios(
     keypoints_por_frame: list,
     exercise: str,
+    side: str = "left",
 ) -> tuple[list[int], list[float]]:
     """
     Calcula o ângulo da articulação primária para cada frame válido.
     Retorna (indices_dos_frames, angulos).
     """
-    p1_idx, p2_idx, p3_idx = ARTICULACAO_PRIMARIA[exercise]
+    p1_idx, p2_idx, p3_idx = _articulacao_primaria(exercise, side)
     indices = []
     angulos = []
 
@@ -151,15 +148,16 @@ def _encontrar_fim(
 def detectar_inicio_movimento(
     keypoints_por_frame: list,
     exercise: str,
+    side: str = "left",
 ) -> int:
     """
     Retorna o índice do frame onde o movimento do exercício começa.
     Se nenhum movimento for detectado, retorna 0 (usa todos os frames).
     """
-    if exercise not in ARTICULACAO_PRIMARIA:
+    if exercise not in ("squat", "pushup", "situp"):
         return 0
 
-    indices, angulos = _calcular_angulos_primarios(keypoints_por_frame, exercise)
+    indices, angulos = _calcular_angulos_primarios(keypoints_por_frame, exercise, side)
 
     if len(angulos) < _MIN_FRAMES:
         return 0
@@ -178,6 +176,7 @@ def detectar_inicio_movimento(
 def detectar_fim_movimento(
     keypoints_por_frame: list,
     exercise: str,
+    side: str = "left",
 ) -> int:
     """
     Retorna o índice (exclusivo) do último frame relevante do exercício.
@@ -186,10 +185,10 @@ def detectar_fim_movimento(
     """
     total = len(keypoints_por_frame)
 
-    if exercise not in ARTICULACAO_PRIMARIA:
+    if exercise not in ("squat", "pushup", "situp"):
         return total
 
-    indices, angulos = _calcular_angulos_primarios(keypoints_por_frame, exercise)
+    indices, angulos = _calcular_angulos_primarios(keypoints_por_frame, exercise, side)
 
     if len(angulos) < _MIN_FRAMES:
         return total
