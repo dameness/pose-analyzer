@@ -21,6 +21,7 @@ export interface AnalysisResult {
   joint_results: Record<string, 'correct' | 'incorrect'>;
   errors: string[];
   video_url?: string;
+  detected_side?: 'left' | 'right';
 }
 
 export type StatusResponse =

@@ -5,29 +5,22 @@ import math
 import pytest
 
 from pipeline.movement_detector import detectar_fim_movimento, detectar_inicio_movimento
-from pipeline.postural_checker import (
-    COTOVELO_ESQ,
-    JOELHO_ESQ,
-    OMBRO_ESQ,
-    PULSO_ESQ,
-    QUADRIL_ESQ,
-    TORNOZELO_ESQ,
-)
+from pipeline.postural_checker import KEYPOINTS_POR_LADO
 
 
 # ---------------------------------------------------------------------------
 # Helper — gera keypoints sintéticos com ângulo desejado na articulação primária
 # ---------------------------------------------------------------------------
 
-# Mapeamento exercício → (p1_idx, p2_idx, p3_idx) — mesma ordem de postural_checker
-_JOINT_MAP = {
-    "squat":  (QUADRIL_ESQ, JOELHO_ESQ, TORNOZELO_ESQ),
-    "pushup": (OMBRO_ESQ, COTOVELO_ESQ, PULSO_ESQ),
-    "situp":  (OMBRO_ESQ, QUADRIL_ESQ, JOELHO_ESQ),
+# Mapeamento exercício → (p1_idx, p2_idx, p3_idx) por lado
+_EXERCISE_JOINTS = {
+    "squat":  ("quadril",  "joelho",   "tornozelo"),
+    "pushup": ("ombro",    "cotovelo", "pulso"),
+    "situp":  ("ombro",    "quadril",  "joelho"),
 }
 
 
-def _gerar_keypoints(angulo_graus: float, exercise: str) -> list[dict]:
+def _gerar_keypoints(angulo_graus: float, exercise: str, side: str = "left") -> list[dict]:
     """
     Gera uma lista de 33 keypoints (formato MediaPipe) onde a articulação
     primária do exercício tem exatamente o ângulo desejado.
@@ -35,7 +28,9 @@ def _gerar_keypoints(angulo_graus: float, exercise: str) -> list[dict]:
     Posiciona p2 (vértice) na origem, p1 apontando para cima (y negativo),
     e p3 rotacionado pelo ângulo desejado.
     """
-    p1_idx, p2_idx, p3_idx = _JOINT_MAP[exercise]
+    kp = KEYPOINTS_POR_LADO[side]
+    j1, j2, j3 = _EXERCISE_JOINTS[exercise]
+    p1_idx, p2_idx, p3_idx = kp[j1], kp[j2], kp[j3]
     rad = math.radians(angulo_graus)
 
     # p2 no centro, p1 para cima, p3 rotacionado
@@ -55,9 +50,9 @@ def _gerar_keypoints(angulo_graus: float, exercise: str) -> list[dict]:
     return keypoints
 
 
-def _gerar_sequencia(angulos: list[float], exercise: str) -> list[list[dict]]:
+def _gerar_sequencia(angulos: list[float], exercise: str, side: str = "left") -> list[list[dict]]:
     """Gera uma sequência de frames com os ângulos especificados."""
-    return [_gerar_keypoints(a, exercise) for a in angulos]
+    return [_gerar_keypoints(a, exercise, side) for a in angulos]
 
 
 # ---------------------------------------------------------------------------
@@ -229,5 +224,31 @@ class TestDetectarFimMovimento:
         frames[-12] = None
 
         fim = detectar_fim_movimento(frames, "squat")
+
+        assert 30 <= fim <= 40
+
+
+class TestDeteccaoLadoDireito:
+    """Testes para verificar que side='right' funciona corretamente."""
+
+    @pytest.mark.parametrize("exercise", ["squat", "pushup", "situp"])
+    def test_inicio_lado_direito(self, exercise):
+        """Detecção de início funciona com side='right'."""
+        angulos = [170.0] * 20 + [170 - (80 / 14) * i for i in range(15)]
+        frames = _gerar_sequencia(angulos, exercise, side="right")
+
+        inicio = detectar_inicio_movimento(frames, exercise, side="right")
+
+        assert 10 <= inicio <= 20
+
+    @pytest.mark.parametrize("exercise", ["squat", "pushup", "situp"])
+    def test_fim_lado_direito(self, exercise):
+        """Detecção de fim funciona com side='right'."""
+        descida = [170 - (80 / 14) * i for i in range(15)]
+        subida = [90 + (80 / 14) * i for i in range(15)]
+        angulos = descida + subida + [170.0] * 20
+        frames = _gerar_sequencia(angulos, exercise, side="right")
+
+        fim = detectar_fim_movimento(frames, exercise, side="right")
 
         assert 30 <= fim <= 40
