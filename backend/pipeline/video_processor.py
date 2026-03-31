@@ -3,7 +3,7 @@ import os
 import cv2
 from pipeline.mediapipe_runner import inicializar_pose, extrair_keypoints
 from pipeline.movement_detector import detectar_fim_movimento, detectar_inicio_movimento
-from pipeline.perspective_corrector import corrigir_perspectiva
+from pipeline.perspective_corrector import corrigir_perspectiva, calcular_theta_medio
 from pipeline.postural_checker import verificar_exercicio
 from pipeline.side_detector import detectar_lado
 
@@ -84,6 +84,8 @@ def processar_video(video_path: str, exercise: str, annotated_output_path: str |
             exercise, fps, frame_inicio, frame_fim, annotated_output_path,
         )
 
+    theta_medio = calcular_theta_medio(keypoints_por_frame, side)
+
     return {
         "exercise": exercise,
         "confidence": round(confidence, 4),
@@ -91,5 +93,9 @@ def processar_video(video_path: str, exercise: str, annotated_output_path: str |
         "trimmed_start": frame_inicio,
         "trimmed_end": frame_fim,
         "detected_side": side,
+        "perspective_correction": {
+            "mean_theta_degrees": theta_medio,
+            "applied": True,
+        },
         **resultado,  # result, joint_angles, joint_results, errors
     }

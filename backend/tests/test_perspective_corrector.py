@@ -11,6 +11,7 @@ from pipeline.perspective_corrector import (
     _estimar_theta_frame,
     _aplicar_ema,
     corrigir_perspectiva,
+    calcular_theta_medio,
     RATIO_LARGURA_OMBRO,
     RATIO_LARGURA_QUADRIL,
     THETA_MAXIMO,
@@ -355,3 +356,32 @@ class TestIntegracaoPipeline:
         erro_sem = abs(angulo_sem - angulo_real)
         erro_com = abs(angulo_com - angulo_real)
         assert erro_com < erro_sem
+
+
+# ---------------------------------------------------------------------------
+# Testes — calcular_theta_medio
+# ---------------------------------------------------------------------------
+
+
+class TestCalcularThetaMedio:
+    def test_returns_mean_degrees(self):
+        """Retorna a média de θ em graus."""
+        keypoints = _gerar_keypoints_base()
+        keypoints[24] = _kp(x=0.5, y=0.6, z=-0.05)
+        frames = [keypoints] * 10
+        resultado = calcular_theta_medio(frames, "left")
+        assert resultado > 0.0
+        assert resultado < 35.0
+
+    def test_zero_rotation(self):
+        """Sem rotação → θ médio ≈ 0."""
+        keypoints = _gerar_keypoints_base()
+        frames = [keypoints] * 10
+        resultado = calcular_theta_medio(frames, "left")
+        assert resultado == pytest.approx(0.0, abs=0.5)
+
+    def test_all_none_frames(self):
+        """Todos frames None → retorna 0."""
+        frames = [None] * 10
+        resultado = calcular_theta_medio(frames, "left")
+        assert resultado == pytest.approx(0.0)

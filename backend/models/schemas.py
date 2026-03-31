@@ -2,6 +2,11 @@ from pydantic import BaseModel
 from typing import Literal, Optional, Union
 
 
+class PerspectiveCorrection(BaseModel):
+    mean_theta_degrees: float
+    applied: bool
+
+
 class AnalysisResult(BaseModel):
     exercise: Literal["squat", "situp", "pushup"]
     result: Literal["correct", "incorrect"]
@@ -12,6 +17,7 @@ class AnalysisResult(BaseModel):
     errors: list[str]
     video_url: Optional[str] = None
     detected_side: Optional[Literal["left", "right"]] = None
+    perspective_correction: Optional[PerspectiveCorrection] = None
 
 
 class JobQueued(BaseModel):

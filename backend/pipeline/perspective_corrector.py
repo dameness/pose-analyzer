@@ -143,6 +143,29 @@ def _aplicar_ema(thetas_raw: list[float]) -> list[float]:
 # ---------------------------------------------------------------------------
 
 
+def calcular_theta_medio(
+    keypoints_por_frame: list[list[dict] | None],
+    side: str,
+) -> float:
+    """
+    Calcula o θ médio (em graus) para os frames válidos.
+    Usado para reportar no resultado da API.
+    """
+    thetas_raw = []
+    for keypoints in keypoints_por_frame:
+        if keypoints is None:
+            continue
+        thetas_raw.append(_estimar_theta_frame(keypoints, side))
+
+    if not thetas_raw:
+        return 0.0
+
+    thetas_smoothed = _aplicar_ema(thetas_raw)
+    thetas_clamped = [max(0.0, min(t, THETA_MAXIMO)) for t in thetas_smoothed]
+    media = sum(thetas_clamped) / len(thetas_clamped)
+    return round(math.degrees(media), 2)
+
+
 def corrigir_perspectiva(
     keypoints_por_frame: list[list[dict] | None],
     side: str,
