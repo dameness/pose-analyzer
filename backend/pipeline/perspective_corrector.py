@@ -148,8 +148,9 @@ def calcular_theta_medio(
     side: str,
 ) -> float:
     """
-    Calcula o θ médio (em graus) para os frames válidos.
-    Usado para reportar no resultado da API.
+    Calcula o θ médio (em graus) para os frames ativos do exercício.
+    Recebe os frames já recortados (após trim de ociosidade), refletindo
+    a rotação durante o movimento analisado. Usado para reportar no resultado da API.
     """
     thetas_raw = []
     for keypoints in keypoints_por_frame:
