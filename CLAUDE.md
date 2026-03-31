@@ -22,6 +22,7 @@ pose-analyzer/
       mediapipe_runner.py    # inicializa o Pose, processa frames, extrai keypoints
       angle_calculator.py    # calcular_angulo() — lógica de ângulos entre keypoints
       side_detector.py       # detecta lado da gravação (esquerdo/direito), rejeita frontal
+      perspective_corrector.py  # corrige distorção de perspectiva ajustando X dos keypoints
       movement_detector.py   # detecta início/fim do movimento, descarta frames ociosos
       postural_checker.py    # lógica de correto/incorreto por exercício e articulação
       video_processor.py     # lê vídeo frame a frame via OpenCV, orquestra o pipeline
@@ -126,7 +127,11 @@ foi removido (reinício do servidor).
     },
     "errors": ["joelho passando a ponta do pé"],
     "video_url": "/video/uuid-string",
-    "detected_side": "left"
+    "detected_side": "left",
+    "perspective_correction": {
+      "mean_theta_degrees": 12.3,
+      "applied": true
+    }
   }
 }
 ```

@@ -91,6 +91,66 @@ _MIN_FRAMES_DETECCAO = 5    # mínimo de frames válidos para decidir
 handler de exceções em `main.py` mapeia automaticamente para
 `error_type: "validation_error"`. Não é necessário alterar `main.py`.
 
+### `pipeline/perspective_corrector.py`
+
+Correção de perspectiva — estima o ângulo de rotação horizontal do corpo (θ)
+e corrige as coordenadas X dos keypoints antes do cálculo de ângulos.
+
+**Por que isso é necessário:** O pipeline calcula ângulos articulares em 2D
+usando apenas X e Y dos keypoints. Isso assume que o usuário está perfeitamente
+de lado para a câmera (90° em relação ao eixo óptico). Na prática, existe uma
+tolerância de visibilidade no `side_detector` (`RATIO_LIMIAR = 1.4`) que aceita
+gravações com desvios de até ~35°. Nesses casos, o eixo de profundidade é
+projetado no eixo X, comprimindo as distâncias horizontais e distorcendo os
+ângulos calculados — um joelho perfeitamente flexionado em 90° pode aparentar
+85° apenas por conta da rotação. A correção reconstrói as posições horizontais
+"como se" o usuário estivesse perfeitamente lateral.
+
+Funções públicas:
+
+- `corrigir_perspectiva(keypoints_por_frame, side) -> list[list[dict] | None]`
+  Retorna uma **nova** lista com coordenadas X corrigidas — não altera a original.
+  Frames `None` passam sem alteração. Cada keypoint dict mantém todos os campos
+  (`x`, `y`, `z`, `visibility`), com apenas `x` modificado.
+
+- `calcular_theta_medio(keypoints_por_frame, side) -> float`
+  Retorna o θ médio em graus para os frames analisados. Usado no campo
+  `perspective_correction.mean_theta_degrees` do resultado da API.
+
+Algoritmo de estimação de θ (híbrido, por frame):
+
+1. **Sinal Z (primário):** `θ_z = atan2(hip_near.z − hip_far.z, body_width_estimate)`
+   — diferença de profundidade entre o quadril do lado visível e o oposto.
+2. **Sinal X (estabilizador):** `θ_x = asin(|ombro_esq.x − ombro_dir.x| / ref_shoulder_width)`
+   — separação horizontal entre ombros; compensa o ruído do Z do MediaPipe.
+3. **Blend ponderado:** `θ = z_conf × θ_z + (1 − z_conf) × θ_x`
+   — quando Z é ruidoso (oclusão, movimento rápido), o peso migra para θ_x.
+4. **EMA:** `θ_smoothed[t] = α × θ_raw[t] + (1 − α) × θ_smoothed[t−1]`
+   — suaviza jitter inter-frame.
+5. **Clamp:** `θ_final = clamp(θ_smoothed, 0, THETA_MAXIMO)`
+
+Correção X (ancorada no quadril near-side):
+```python
+x_corrected = x_quadril + (x_original − x_quadril) / cos(θ)
+```
+O quadril do lado visível é o pivô — não se move. Os demais pontos expandem
+proporcionalmente. Y, Z e visibility são preservados.
+
+Constantes de configuração (topo do arquivo):
+
+```python
+ALPHA_EMA           = 0.3               # fator de suavização EMA
+THETA_MAXIMO        = math.radians(35)  # rotação máxima corrigível
+RATIO_LARGURA_OMBRO = 0.55              # largura ombro / altura torso
+RATIO_LARGURA_QUADRIL = 0.45            # largura quadril / altura torso
+FATOR_RUIDO_Z       = 10.0              # escala o ruído Z na fórmula de confiança
+```
+
+**Posição no pipeline:** entre `detectar_lado()` e `detectar_inicio_movimento()`.
+O `video_annotator` recebe os keypoints originais (pré-correção) para desenhar
+o esqueleto sobre o vídeo real. Todos os outros módulos downstream recebem
+os keypoints corrigidos.
+
 ### `pipeline/movement_detector.py`
 
 Pré-processamento — detecta onde o exercício começa e termina no vídeo,
@@ -178,11 +238,12 @@ Função principal:
 - `processar_video(video_path: str, exercise: str, annotated_output_path: str | None = None) -> dict`
   Abre o vídeo com OpenCV, itera frame a frame, chama o MediaPipe,
   extrai keypoints, detecta o lado da gravação (levanta `ValueError` se frontal),
-  calcula ângulos e verifica postura usando os keypoints do lado detectado.
+  aplica correção de perspectiva nos keypoints, detecta o movimento,
+  calcula ângulos e verifica postura usando os keypoints corrigidos do lado detectado.
   Se `annotated_output_path` for fornecido, chama `anotar_video()` ao final
-  antes de retornar.
+  antes de retornar (usando os keypoints originais, sem correção).
   Retorna o dict completo de resultado conforme o contrato da API
-  (inclui `detected_side`).
+  (inclui `detected_side` e `perspective_correction`).
 
 ### `pipeline/video_annotator.py`
 
@@ -264,9 +325,13 @@ video_processor.processar_video()
     OpenCV lê o frame
     mediapipe_runner.extrair_keypoints()
         ↓
-  salva keypoints_completos (todos os frames, antes do trim)
-        ↓
   side_detector.detectar_lado()   ← retorna "left"/"right" ou ValueError se frontal
+        ↓
+  salva keypoints_completos (originais, pré-correção — usados pelo annotator)
+        ↓
+  perspective_corrector.corrigir_perspectiva(side=side)
+  ← estima θ por frame (Z + X híbrido), suaviza EMA, clamp 35°,
+    corrige X via x_quadril + (x − x_quadril) / cos(θ)
         ↓
   movement_detector.detectar_inicio_movimento(side=side)
   movement_detector.detectar_fim_movimento(side=side)
