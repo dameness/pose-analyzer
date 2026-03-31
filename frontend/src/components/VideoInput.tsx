@@ -263,7 +263,7 @@ function UploadMode({
     <input
       ref={inputRef}
       type="file"
-      accept="video/mp4,video/webm,video/quicktime"
+      accept="video/mp4,video/webm,video/quicktime,.mp4,.webm,.mov"
       className="hidden"
       onChange={handleChange}
       disabled={disabled}
