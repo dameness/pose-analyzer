@@ -10,6 +10,7 @@ from pipeline.perspective_corrector import (
     _calcular_confianca_z,
     _estimar_theta_frame,
     _aplicar_ema,
+    corrigir_perspectiva,
     RATIO_LARGURA_OMBRO,
     RATIO_LARGURA_QUADRIL,
     THETA_MAXIMO,
@@ -196,3 +197,161 @@ class TestEMASuavizacao:
     def test_single_value(self):
         """Um único valor → retorna esse valor."""
         assert _aplicar_ema([0.3]) == [pytest.approx(0.3)]
+
+
+# ---------------------------------------------------------------------------
+# Testes — corrigir_perspectiva (X correction)
+# ---------------------------------------------------------------------------
+
+
+class TestCorrecaoX:
+    def test_zero_theta_no_change(self):
+        """θ = 0 → X de saída == X de entrada."""
+        keypoints = _gerar_keypoints_base()
+        frames = [keypoints] * 10
+        resultado = corrigir_perspectiva(frames, "left")
+        for frame_orig, frame_corr in zip(frames, resultado):
+            for kp_orig, kp_corr in zip(frame_orig, frame_corr):
+                assert kp_corr["x"] == pytest.approx(kp_orig["x"], abs=1e-6)
+                assert kp_corr["y"] == kp_orig["y"]
+
+    def test_known_rotation_expands_x(self):
+        """θ > 0 → pontos longe do quadril expandem em X."""
+        keypoints = _gerar_keypoints_base()
+        # Forçar rotação via offset Z
+        keypoints[24] = _kp(x=0.5, y=0.6, z=-0.1)  # far hip com Z diferente
+        # Colocar um keypoint com X diferente do hip anchor para ver a expansão
+        keypoints[11] = _kp(x=0.4, y=0.3, z=0.0)   # ombro near com X != hip
+        frames = [keypoints] * 15
+        resultado = corrigir_perspectiva(frames, "left")
+        # O ombro corrigido deve estar mais longe do quadril em X
+        hip_x = keypoints[23]["x"]  # 0.5
+        ombro_orig_dist = abs(keypoints[11]["x"] - hip_x)       # 0.1
+        ombro_corr_dist = abs(resultado[-1][11]["x"] - hip_x)
+        assert ombro_corr_dist > ombro_orig_dist
+
+    def test_hip_anchor_unchanged(self):
+        """Quadril do near side não se move após correção."""
+        keypoints = _gerar_keypoints_base()
+        keypoints[24] = _kp(x=0.5, y=0.6, z=-0.1)
+        frames = [keypoints] * 10
+        resultado = corrigir_perspectiva(frames, "left")
+        for frame in resultado:
+            assert frame[23]["x"] == pytest.approx(keypoints[23]["x"], abs=1e-6)
+
+    def test_y_unchanged(self):
+        """Coordenadas Y não são alteradas."""
+        keypoints = _gerar_keypoints_base()
+        keypoints[24] = _kp(x=0.5, y=0.6, z=-0.1)
+        frames = [keypoints] * 10
+        resultado = corrigir_perspectiva(frames, "left")
+        for frame_orig, frame_corr in zip(frames, resultado):
+            for kp_orig, kp_corr in zip(frame_orig, frame_corr):
+                assert kp_corr["y"] == kp_orig["y"]
+
+    def test_none_frames_pass_through(self):
+        """Frames None passam sem alteração."""
+        keypoints = _gerar_keypoints_base()
+        frames = [None, keypoints, None, keypoints, None]
+        resultado = corrigir_perspectiva(frames, "left")
+        assert resultado[0] is None
+        assert resultado[2] is None
+        assert resultado[4] is None
+        assert resultado[1] is not None
+        assert resultado[3] is not None
+
+    def test_does_not_mutate_input(self):
+        """A lista original não é alterada."""
+        keypoints = _gerar_keypoints_base()
+        keypoints[24] = _kp(x=0.5, y=0.6, z=-0.1)
+        keypoints[11] = _kp(x=0.4, y=0.3, z=0.0)
+        original_x = keypoints[11]["x"]
+        frames = [keypoints] * 5
+        corrigir_perspectiva(frames, "left")
+        assert frames[0][11]["x"] == original_x
+
+
+class TestClamping:
+    def test_theta_clamped_to_max(self):
+        """θ > THETA_MAXIMO → corrigido com cos(THETA_MAXIMO), não mais."""
+        keypoints = _gerar_keypoints_base()
+        # ΔZ enorme para forçar θ > 35°
+        keypoints[24] = _kp(x=0.5, y=0.6, z=-1.0)
+        keypoints[11] = _kp(x=0.3, y=0.3, z=0.0)
+        frames = [keypoints] * 15
+        resultado = corrigir_perspectiva(frames, "left")
+        # Expansão máxima = 1/cos(35°) ≈ 1.2208
+        hip_x = keypoints[23]["x"]
+        ombro_orig_dist = abs(keypoints[11]["x"] - hip_x)
+        ombro_corr_dist = abs(resultado[-1][11]["x"] - hip_x)
+        max_expansion = 1.0 / math.cos(THETA_MAXIMO)
+        actual_expansion = ombro_corr_dist / ombro_orig_dist if ombro_orig_dist > 0 else 1.0
+        assert actual_expansion == pytest.approx(max_expansion, abs=0.05)
+
+    def test_negative_theta_clamped_to_zero(self):
+        """θ negativo impossível na prática (abs usado), mas clamped a 0."""
+        keypoints = _gerar_keypoints_base()
+        frames = [keypoints] * 10
+        resultado = corrigir_perspectiva(frames, "left")
+        # Com zero rotation, output == input
+        for frame_orig, frame_corr in zip(frames, resultado):
+            for kp_orig, kp_corr in zip(frame_orig, frame_corr):
+                assert kp_corr["x"] == pytest.approx(kp_orig["x"], abs=1e-6)
+
+
+class TestRightSide:
+    def test_right_side_uses_correct_anchor(self):
+        """Side 'right' ancora no quadril direito (idx 24)."""
+        keypoints = _gerar_keypoints_base()
+        keypoints[23] = _kp(x=0.5, y=0.6, z=-0.1)  # far hip (esq) com Z offset
+        keypoints[12] = _kp(x=0.4, y=0.3, z=0.0)   # ombro near (dir)
+        frames = [keypoints] * 15
+        resultado = corrigir_perspectiva(frames, "right")
+        # Quadril direito (near) não se move
+        for frame in resultado:
+            assert frame[24]["x"] == pytest.approx(keypoints[24]["x"], abs=1e-6)
+
+
+class TestIntegracaoPipeline:
+    def test_correcao_melhora_angulos_com_rotacao(self):
+        """
+        Keypoints sintéticos com rotação conhecida:
+        os ângulos calculados após correção devem estar mais próximos
+        dos ângulos reais do que sem correção.
+        """
+        from pipeline.angle_calculator import calcular_angulo
+
+        keypoints = _gerar_keypoints_base()
+        # Simular squat: quadril(23) → joelho(25) → tornozelo(27)
+        # Posição "real" lateral: joelho em x=0.5 (alinhado com quadril e tornozelo)
+        # mas com rotação, x é comprimido
+        theta_real = math.radians(20)
+        cos_t = math.cos(theta_real)
+        hip_x = 0.5
+
+        # Posicionar keypoints como se o corpo estivesse rotacionado 20°
+        keypoints[23] = _kp(x=hip_x, y=0.6, z=0.0)                      # quadril
+        keypoints[25] = _kp(x=hip_x + (0.05 * cos_t), y=0.75, z=0.0)    # joelho (comprimido)
+        keypoints[27] = _kp(x=hip_x + (-0.02 * cos_t), y=0.9, z=0.0)    # tornozelo (comprimido)
+        # Dar sinal de rotação via Z
+        keypoints[24] = _kp(x=0.5, y=0.6, z=-0.06)  # far hip
+
+        frames = [keypoints] * 15
+
+        # Ângulo sem correção (comprimido)
+        angulo_sem = calcular_angulo(keypoints[23], keypoints[25], keypoints[27])
+
+        # Ângulo com correção
+        corrigidos = corrigir_perspectiva(frames, "left")
+        angulo_com = calcular_angulo(corrigidos[-1][23], corrigidos[-1][25], corrigidos[-1][27])
+
+        # Ângulo "verdadeiro" (posições sem compressão)
+        kp_real_hip = _kp(x=hip_x, y=0.6)
+        kp_real_knee = _kp(x=hip_x + 0.05, y=0.75)
+        kp_real_ankle = _kp(x=hip_x - 0.02, y=0.9)
+        angulo_real = calcular_angulo(kp_real_hip, kp_real_knee, kp_real_ankle)
+
+        # O ângulo corrigido deve estar mais próximo do real
+        erro_sem = abs(angulo_sem - angulo_real)
+        erro_com = abs(angulo_com - angulo_real)
+        assert erro_com < erro_sem

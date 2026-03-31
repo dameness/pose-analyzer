@@ -136,3 +136,66 @@ def _aplicar_ema(thetas_raw: list[float]) -> list[float]:
         smoothed.append(s)
 
     return smoothed
+
+
+# ---------------------------------------------------------------------------
+# Função pública — corrige perspectiva de uma sequência de frames
+# ---------------------------------------------------------------------------
+
+
+def corrigir_perspectiva(
+    keypoints_por_frame: list[list[dict] | None],
+    side: str,
+) -> list[list[dict] | None]:
+    """
+    Corrige a perspectiva dos keypoints para compensar rotação parcial
+    do corpo em relação à câmera.
+
+    Retorna uma nova lista com X corrigido. Não altera a original.
+    Frames None passam sem alteração.
+    """
+    idx = _INDICES[side]
+    hip_near_idx = idx["hip_near"]
+
+    # Passo 1: estimar θ_raw para cada frame válido
+    thetas_raw = []
+    valid_indices = []
+    for i, keypoints in enumerate(keypoints_por_frame):
+        if keypoints is None:
+            continue
+        theta = _estimar_theta_frame(keypoints, side)
+        thetas_raw.append(theta)
+        valid_indices.append(i)
+
+    if not thetas_raw:
+        return list(keypoints_por_frame)
+
+    # Passo 2: suavizar com EMA
+    thetas_smoothed = _aplicar_ema(thetas_raw)
+
+    # Passo 3: clampar
+    thetas_clamped = [max(0.0, min(t, THETA_MAXIMO)) for t in thetas_smoothed]
+
+    # Passo 4: corrigir X para cada frame válido
+    theta_map = dict(zip(valid_indices, thetas_clamped))
+    resultado = []
+
+    for i, keypoints in enumerate(keypoints_por_frame):
+        if keypoints is None:
+            resultado.append(None)
+            continue
+
+        theta = theta_map[i]
+        cos_theta = math.cos(theta)
+
+        x_center = keypoints[hip_near_idx]["x"]
+
+        frame_corrigido = []
+        for kp in keypoints:
+            novo_kp = dict(kp)
+            novo_kp["x"] = x_center + (kp["x"] - x_center) / cos_theta
+            frame_corrigido.append(novo_kp)
+
+        resultado.append(frame_corrigido)
+
+    return resultado
