@@ -3,6 +3,7 @@ import os
 import cv2
 from pipeline.mediapipe_runner import inicializar_pose, extrair_keypoints
 from pipeline.movement_detector import detectar_fim_movimento, detectar_inicio_movimento
+from pipeline.perspective_corrector import corrigir_perspectiva
 from pipeline.postural_checker import verificar_exercicio
 from pipeline.side_detector import detectar_lado
 
@@ -53,10 +54,15 @@ def processar_video(video_path: str, exercise: str, annotated_output_path: str |
     # Detectar lado da gravação (levanta ValueError se frontal)
     side = detectar_lado(keypoints_por_frame)
 
+    # Preservar keypoints originais para anotação do vídeo (sem correção)
+    keypoints_completos = list(keypoints_por_frame)
+
+    # Corrigir perspectiva — ajusta X para compensar rotação parcial
+    keypoints_por_frame = corrigir_perspectiva(keypoints_por_frame, side)
+
     # Detectar início e fim do movimento e descartar frames ociosos
     frame_inicio = detectar_inicio_movimento(keypoints_por_frame, exercise, side)
     frame_fim = detectar_fim_movimento(keypoints_por_frame, exercise, side)
-    keypoints_completos = list(keypoints_por_frame)  # preserva todos os frames para anotação
     keypoints_por_frame = keypoints_por_frame[frame_inicio:frame_fim]
 
     frames_analisados = len([k for k in keypoints_por_frame if k is not None])
