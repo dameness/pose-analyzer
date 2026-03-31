@@ -8,9 +8,13 @@ from pipeline.perspective_corrector import (
     _estimar_theta_z,
     _estimar_theta_x,
     _calcular_confianca_z,
+    _estimar_theta_frame,
+    _aplicar_ema,
     RATIO_LARGURA_OMBRO,
     RATIO_LARGURA_QUADRIL,
     THETA_MAXIMO,
+    ALPHA_EMA,
+    FATOR_RUIDO_Z,
 )
 
 
@@ -117,3 +121,78 @@ class TestCalcularConfiancaZ:
         """Ruído moderado → confiança entre 0 e 1."""
         result = _calcular_confianca_z(0.1)
         assert 0.0 < result < 1.0
+
+
+# ---------------------------------------------------------------------------
+# Testes — estimação de θ por frame
+# ---------------------------------------------------------------------------
+
+class TestEstimarThetaFrame:
+    def test_perfect_side_view(self):
+        """Keypoints alinhados (ΔZ=0, ΔX=0) → θ ≈ 0."""
+        keypoints = _gerar_keypoints_base()
+        theta = _estimar_theta_frame(keypoints, "left")
+        assert theta == pytest.approx(0.0, abs=0.01)
+
+    def test_known_z_rotation(self):
+        """Offset Z controlado com X alinhado → θ dominado por θ_z."""
+        keypoints = _gerar_keypoints_base()
+        # Adicionar offset Z no far hip (dir) para simular rotação
+        keypoints[24] = _kp(x=0.5, y=0.6, z=-0.05)
+        theta = _estimar_theta_frame(keypoints, "left")
+        # θ deve ser positivo (rotação detectada)
+        assert theta > 0.05
+
+    def test_noisy_z_shifts_to_theta_x(self):
+        """Z ruidoso nos keypoints do near side → confiança cai, θ_x domina."""
+        keypoints = _gerar_keypoints_base()
+        # Ruído alto em Z nos keypoints do lado near
+        keypoints[11] = _kp(x=0.55, y=0.3, z=0.5)    # ombro esq — z muito alto, X shifted
+        keypoints[13] = _kp(x=0.5, y=0.45, z=-0.3)   # cotovelo esq — z muito baixo
+        keypoints[23] = _kp(x=0.5, y=0.6, z=0.2)     # quadril esq
+        keypoints[25] = _kp(x=0.5, y=0.75, z=-0.4)   # joelho esq
+        keypoints[27] = _kp(x=0.5, y=0.9, z=0.1)     # tornozelo esq
+        # Ombros com separação X para dar sinal a θ_x
+        keypoints[12] = _kp(x=0.45, y=0.3, z=0.0)
+        theta = _estimar_theta_frame(keypoints, "left")
+        # Deve retornar um valor válido (não NaN, não negativo)
+        assert theta >= 0.0
+        assert not math.isnan(theta)
+
+    def test_degenerate_torso_returns_zero(self):
+        """Torso height ≈ 0 → θ = 0 (frame degenerado)."""
+        keypoints = _gerar_keypoints_base()
+        # Ombro e quadril na mesma posição Y
+        keypoints[11] = _kp(x=0.5, y=0.5, z=0.0)
+        keypoints[23] = _kp(x=0.5, y=0.5, z=0.0)
+        theta = _estimar_theta_frame(keypoints, "left")
+        assert theta == pytest.approx(0.0, abs=1e-6)
+
+
+# ---------------------------------------------------------------------------
+# Testes — suavização EMA
+# ---------------------------------------------------------------------------
+
+class TestEMASuavizacao:
+    def test_constant_sequence_converges(self):
+        """Sequência constante de θ → EMA converge para o valor."""
+        thetas_raw = [0.2] * 20
+        smoothed = _aplicar_ema(thetas_raw)
+        assert smoothed[-1] == pytest.approx(0.2, abs=0.01)
+
+    def test_spike_dampened(self):
+        """Spike único → EMA amortece."""
+        thetas_raw = [0.1] * 10 + [0.5] + [0.1] * 10
+        smoothed = _aplicar_ema(thetas_raw)
+        # No ponto do spike (index 10), o smoothed deve ser menor que o raw
+        assert smoothed[10] < 0.5
+        # Após o spike, deve convergir de volta
+        assert smoothed[-1] == pytest.approx(0.1, abs=0.02)
+
+    def test_empty_list(self):
+        """Lista vazia → retorna lista vazia."""
+        assert _aplicar_ema([]) == []
+
+    def test_single_value(self):
+        """Um único valor → retorna esse valor."""
+        assert _aplicar_ema([0.3]) == [pytest.approx(0.3)]

@@ -83,3 +83,56 @@ def _estimar_theta_x(separacao_x: float, ref_shoulder_width: float) -> float:
 def _calcular_confianca_z(z_noise: float) -> float:
     """Retorna confiança em Z (0-1) inversamente proporcional ao ruído."""
     return 1.0 / (1.0 + z_noise * FATOR_RUIDO_Z)
+
+
+def _estimar_theta_frame(keypoints: list[dict], side: str) -> float:
+    """
+    Estima o ângulo de rotação θ para um único frame.
+    Combina θ_z (baseado em Z) e θ_x (separação X) ponderados pela
+    confiança no sinal Z.
+    Retorna 0.0 se o frame for degenerado (torso height ≈ 0).
+    """
+    idx = _INDICES[side]
+
+    shoulder_near = keypoints[idx["shoulder_near"]]
+    hip_near = keypoints[idx["hip_near"]]
+    hip_far = keypoints[idx["hip_far"]]
+    shoulder_far = keypoints[idx["shoulder_far"]]
+
+    torso_height = abs(shoulder_near["y"] - hip_near["y"])
+    if torso_height < 1e-6:
+        return 0.0
+
+    body_width = torso_height * RATIO_LARGURA_QUADRIL
+    ref_shoulder_width = torso_height * RATIO_LARGURA_OMBRO
+
+    # Sinal A — Z
+    theta_z = _estimar_theta_z(hip_near["z"], hip_far["z"], body_width)
+
+    # Sinal B — X separation
+    separacao_x = abs(shoulder_near["x"] - shoulder_far["x"])
+    theta_x = _estimar_theta_x(separacao_x, ref_shoulder_width)
+
+    # Ruído Z dos keypoints do near side
+    near_indices = _PARES_NEAR[side]
+    z_values = [keypoints[i]["z"] for i in near_indices]
+    z_noise = float(np.std(z_values))
+
+    # Blend ponderado
+    z_conf = _calcular_confianca_z(z_noise)
+    theta_raw = z_conf * abs(theta_z) + (1.0 - z_conf) * theta_x
+
+    return max(theta_raw, 0.0)
+
+
+def _aplicar_ema(thetas_raw: list[float]) -> list[float]:
+    """Aplica suavização EMA (exponential moving average) na sequência de θ."""
+    if not thetas_raw:
+        return []
+
+    smoothed = [thetas_raw[0]]
+    for i in range(1, len(thetas_raw)):
+        s = ALPHA_EMA * thetas_raw[i] + (1.0 - ALPHA_EMA) * smoothed[i - 1]
+        smoothed.append(s)
+
+    return smoothed
