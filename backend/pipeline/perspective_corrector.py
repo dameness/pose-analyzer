@@ -188,6 +188,10 @@ def corrigir_perspectiva(
         theta = theta_map[i]
         cos_theta = math.cos(theta)
 
+        if cos_theta < 1e-6:
+            resultado.append([dict(kp) for kp in keypoints])
+            continue
+
         x_center = keypoints[hip_near_idx]["x"]
 
         frame_corrigido = []
