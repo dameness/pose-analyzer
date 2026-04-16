@@ -69,7 +69,7 @@ def anotar_video(
     Lê o vídeo original e grava uma versão anotada com o esqueleto MediaPipe.
 
     Frames dentro de [frame_inicio, frame_fim) recebem coloração baseada em joint_results.
-    Frames fora do intervalo recebem o esqueleto em COR_NEUTRO.
+    Frames fora do intervalo são copiados sem anotação.
     Frames sem keypoints detectados são copiados sem anotação.
     """
     cap = cv2.VideoCapture(video_path)
@@ -93,10 +93,8 @@ def anotar_video(
 
             keypoints = keypoints_completos[i] if i < len(keypoints_completos) else None
 
-            if keypoints is not None:
-                dentro_intervalo = frame_inicio <= i < frame_fim
-                mapa = mapa_cor_ativo if dentro_intervalo else {}
-                _desenhar_esqueleto(frame, keypoints, mapa, largura, altura)
+            if keypoints is not None and frame_inicio <= i < frame_fim:
+                _desenhar_esqueleto(frame, keypoints, mapa_cor_ativo, largura, altura)
 
             # Converter BGR → RGB e empacotar como frame H.264
             frame_rgb = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
