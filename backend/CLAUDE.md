@@ -159,19 +159,33 @@ descartando frames ociosos no início e no final da gravação.
 Funções:
 
 - `detectar_inicio_movimento(keypoints_por_frame, exercise, side="left") -> int`
-  Retorna o índice do primeiro frame relevante. Calcula o ângulo da
-  articulação primária do exercício em cada frame, suaviza com moving
-  average (janela=5), e procura o primeiro trecho de 5 frames consecutivos
-  com queda acumulada >= 15°. Retorna 0 se nenhum movimento for detectado.
+  Retorna o índice do primeiro frame relevante. Combina dois sinais:
+  1. **Ângulo:** primeiro trecho de 5 frames consecutivos com queda acumulada >= 15°
+     na articulação primária do exercício (série suavizada com moving average).
+  2. **Orientação:** primeiro frame onde o usuário está corretamente de lado
+     (razão de visibilidade satisfaz `RATIO_LIMIAR` por `FRAMES_CONSECUTIVOS` seguidos).
+  Retorna `max(inicio_angulo, inicio_orientacao)`.
 - `detectar_fim_movimento(keypoints_por_frame, exercise, side="left") -> int`
-  Retorna o índice (exclusivo) do último frame relevante. Varre a série
-  suavizada de trás para frente procurando o último trecho com variação
-  angular significativa. Retorna `len(keypoints_por_frame)` se não houver
-  idle no final.
+  Retorna o índice (exclusivo) do último frame relevante. Combina:
+  1. **Ângulo:** último trecho com variação angular significativa (varredura de trás
+     para frente na série suavizada).
+  2. **Orientação:** último frame onde o usuário ainda está corretamente de lado.
+  Retorna `min(fim_angulo, fim_orientacao)`.
 
 O parâmetro `side` (`"left"` ou `"right"`) determina quais keypoints são
-usados para calcular o ângulo da articulação primária, via `KEYPOINTS_POR_LADO`
-de `postural_checker.py`.
+usados para o ângulo (via `KEYPOINTS_POR_LADO`) e para a verificação de
+orientação (via `RATIO_LIMIAR` importado de `side_detector.py`).
+
+Funções internas relevantes:
+
+- `_frame_orientacao_valida(keypoints, side) -> bool`
+  Verifica se a razão de visibilidade do frame satisfaz `RATIO_LIMIAR` para o lado.
+  Usa os mesmos 5 pares de keypoints do `side_detector` (ombro, cotovelo, quadril,
+  joelho, tornozelo).
+- `_encontrar_janela_orientacao(keypoints_por_frame, side) -> tuple[int, int]`
+  Retorna `(inicio, fim)` da janela com orientação válida. Exige
+  `FRAMES_CONSECUTIVOS` frames seguidos para declarar início/fim (robusto contra
+  jitter). Fallback: `(0, total)` quando não consegue determinar.
 
 Constantes de configuração (topo do arquivo):
 
@@ -255,9 +269,9 @@ Função principal:
   Re-lê o vídeo original frame a frame. Para frames dentro de
   `[frame_inicio, frame_fim)` desenha o esqueleto com cores baseadas em
   `joint_results` (verde = correto, vermelho = incorreto). Frames fora do
-  intervalo recebem esqueleto cinza neutro. Usa PyAV para gravar em H.264
-  (necessário para reprodução no browser — OpenCV só produz mp4v/MPEG-4 Part 2,
-  que os browsers não suportam).
+  intervalo são copiados sem anotação (sem esqueleto). Usa PyAV para gravar
+  em H.264 (necessário para reprodução no browser — OpenCV só produz
+  mp4v/MPEG-4 Part 2, que os browsers não suportam).
 
 Função auxiliar (testável isoladamente):
 
