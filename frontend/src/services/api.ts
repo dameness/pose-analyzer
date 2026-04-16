@@ -1,3 +1,4 @@
+import mockAnalysisData from '../assets/mockAnalysisData.json';
 import type { ExerciseType, StatusResponse, SubmitVideoResponse } from '../types';
 
 const BASE_URL = import.meta.env.VITE_API_URL ?? '';
@@ -38,24 +39,7 @@ export function buildVideoUrl(path: string): string {
 
 export async function getStatus(jobId: string): Promise<StatusResponse> {
   if (!BASE_URL) {
-    await delay(3000);
-    const mockResult: StatusResponse = {
-      status: 'done',
-      result: {
-        exercise: 'squat',
-        result: 'incorrect',
-        confidence: 0.87,
-        frames_analyzed: 42,
-        joint_angles: {
-          knee: [120, 118, 95, 88],
-          hip: [170, 165, 140, 130],
-          ankle: [90, 88, 85, 84],
-        },
-        joint_results: { knee: 'incorrect', hip: 'correct', ankle: 'correct' },
-        errors: ['joelho passando a ponta do pé'],
-      },
-    };
-    return mockResult;
+    return mockAnalysisData as StatusResponse;
   }
 
   const response = await fetch(`${BASE_URL}/status/${jobId}`, {
