@@ -82,6 +82,7 @@ def processar_video(video_path: str, exercise: str, annotated_output_path: str |
         anotar_video(
             video_path, keypoints_completos, resultado["joint_results"],
             exercise, fps, frame_inicio, frame_fim, annotated_output_path,
+            side=side,
         )
 
     theta_medio = calcular_theta_medio(keypoints_por_frame, side)

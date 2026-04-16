@@ -69,3 +69,6 @@ Thumbs.db
 *.njsproj
 *.sln
 *.sw?
+
+# ─── Superpowers ────────────────────────────────────────────────────────────
+.superpowers

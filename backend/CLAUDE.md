@@ -268,30 +268,42 @@ Gera o vídeo anotado com esqueleto MediaPipe e articulações coloridas.
 
 Função principal:
 
-- `anotar_video(video_path, keypoints_completos, joint_results, exercise, fps, frame_inicio, frame_fim, output_path) -> None`
+- `anotar_video(video_path, keypoints_completos, joint_results, exercise, fps, frame_inicio, frame_fim, output_path, side="left") -> None`
   Re-lê o vídeo original frame a frame. Para frames dentro de
-  `[frame_inicio, frame_fim)` desenha o esqueleto com cores baseadas em
-  `joint_results` (verde = correto, vermelho = incorreto). Frames fora do
-  intervalo são copiados sem anotação (sem esqueleto). Usa PyAV para gravar
-  em H.264 (necessário para reprodução no browser — OpenCV só produz
-  mp4v/MPEG-4 Part 2, que os browsers não suportam).
+  `[frame_inicio, frame_fim)` chama `_anotar_frame()`. Frames fora do
+  intervalo são copiados sem anotação. Usa PyAV para gravar em H.264
+  (necessário para reprodução no browser).
 
-Função auxiliar (testável isoladamente):
+**Estratégia de anotação por articulação (`_anotar_frame`):**
 
-- `_construir_mapa_cor(exercise, joint_results) -> dict[int, tuple]`
-  Mapeia índice de landmark MediaPipe → cor BGR. Quando um landmark pertence
-  a múltiplas articulações (ex: quadril em `situp` aparece em `hip` e `spine`),
-  a primeira articulação listada em `_LANDMARKS_POR_ARTICULACAO` tem prioridade.
+Cada articulação é definida por uma tripla `(p1, vértice, p3)`. Para cada frame,
+o anotador desenha nessa ordem (back → front):
 
-Mapeamento articulação → landmarks por exercício:
+1. Arestas das articulações **corretas** — ambas as pernas do ângulo (p1→vértice e vértice→p3) coloridas
+2. Arestas das articulações **incorretas** — idem, sobrescrevem sobreposições
+3. Arestas neutras — demais conexões POSE_CONNECTIONS em cinza
+4. Landmarks neutros — todos em cinza (referência visual)
+5. **Anel** colorido ao redor do vértice (`_RAIO_ANEL = 14px`; espessura 3 se incorreto, 2 se correto)
+6. Ponto interno colorido no vértice
+7. **Label de ângulo** — valor em graus, offset perpendicular à linha p1→p3 (`_OFFSET_LABEL = 60px`)
+   - OpenCV não suporta Unicode; o símbolo `°` é simulado por um pequeno círculo desenhado ao lado do número
+
+Quando dois joints compartilham uma aresta (ex: quadril e joelho dividem o segmento fêmur),
+o **incorreto vence** porque é desenhado por último (`_construir_info_articulacoes` ordena
+corretos antes de incorretos).
+
+**Triplas por exercício** (`_TRIPLAS_POR_EXERCICIO`):
 
 ```python
-_LANDMARKS_POR_ARTICULACAO = {
-    "squat":  {"knee": [25, 26], "hip": [23, 24], "ankle": [27, 28, 31, 32]},
-    "pushup": {"elbow": [13, 14], "shoulder": [11, 12], "hip": [23, 24]},
-    "situp":  {"hip": [23, 24], "spine": [0, 11, 12, 23, 24]},
-}
+"squat":  {"knee": ("quadril","joelho","tornozelo"), "hip": ("ombro","quadril","joelho"), "ankle": ("joelho","tornozelo","indice_pe")}
+"pushup": {"elbow": ("ombro","cotovelo","pulso"), "shoulder": ("cotovelo","ombro","quadril"), "hip": ("ombro","quadril","joelho")}
+"situp":  {"hip": ("ombro","quadril","joelho")}
+# situp/spine: caso especial bilateral — vértice = midpoint(OMBRO_ESQ, OMBRO_DIR),
+#              p1 = NARIZ, p3 = midpoint(QUADRIL_ESQ, QUADRIL_DIR)
 ```
+
+As chaves de partes do corpo são resolvidas para índices de landmark concretos via
+`KEYPOINTS_POR_LADO[side]` de `postural_checker.py`.
 
 ### `main.py`
 
