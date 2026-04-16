@@ -3,14 +3,11 @@ import type { ExerciseType, StatusResponse, SubmitVideoResponse } from '../types
 
 const BASE_URL = import.meta.env.VITE_API_URL ?? '';
 
-const delay = (ms: number) => new Promise<void>((resolve) => setTimeout(resolve, ms));
-
 export async function submitVideo(
   file: File,
   exercise: ExerciseType
 ): Promise<SubmitVideoResponse> {
   if (!BASE_URL) {
-    await delay(3000);
     return { job_id: 'mock-job-id', status: 'queued' };
   }
 
