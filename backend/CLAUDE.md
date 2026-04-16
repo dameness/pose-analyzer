@@ -73,6 +73,7 @@ Função:
   frames com pose detectada.
 
 Algoritmo:
+
 1. Para cada frame, calcula a média de visibilidade dos 5 pares de keypoints
    (ombro, cotovelo, quadril, joelho, tornozelo) de cada lado
 2. Calcula a razão `média_esq / média_dir` por frame
@@ -130,9 +131,11 @@ Algoritmo de estimação de θ (híbrido, por frame):
 5. **Clamp:** `θ_final = clamp(θ_smoothed, 0, THETA_MAXIMO)`
 
 Correção X (ancorada no quadril near-side):
+
 ```python
 x_corrected = x_quadril + (x_original − x_quadril) / cos(θ)
 ```
+
 O quadril do lado visível é o pivô — não se move. Os demais pontos expandem
 proporcionalmente. Y, Z e visibility são preservados.
 
@@ -164,13 +167,13 @@ Funções:
      na articulação primária do exercício (série suavizada com moving average).
   2. **Orientação:** primeiro frame onde o usuário está corretamente de lado
      (razão de visibilidade satisfaz `RATIO_LIMIAR` por `FRAMES_CONSECUTIVOS` seguidos).
-  Retorna `max(inicio_angulo, inicio_orientacao)`.
+     Retorna `max(inicio_angulo, inicio_orientacao)`.
 - `detectar_fim_movimento(keypoints_por_frame, exercise, side="left") -> int`
   Retorna o índice (exclusivo) do último frame relevante. Combina:
   1. **Ângulo:** último trecho com variação angular significativa (varredura de trás
      para frente na série suavizada).
   2. **Orientação:** último frame onde o usuário ainda está corretamente de lado.
-  Retorna `min(fim_angulo, fim_orientacao)`.
+     Retorna `min(fim_angulo, fim_orientacao)`.
 
 O parâmetro `side` (`"left"` ou `"right"`) determina quais keypoints são
 usados para o ângulo (via `KEYPOINTS_POR_LADO`) e para a verificação de
@@ -318,11 +321,11 @@ Jobs criados com sucesso retornam **202 Accepted**.
 
 O handler de exceções da thread diferencia três tipos:
 
-| Exceção         | `error_type`        | Causa típica                          |
-| --------------- | ------------------- | ------------------------------------- |
-| `ValueError`    | `validation_error`  | Vídeo muito longo, exercício inválido, gravação frontal |
-| `RuntimeError`  | `invalid_file`      | OpenCV não conseguiu abrir o vídeo    |
-| `Exception`     | `processing_error`  | Erros inesperados de pipeline         |
+| Exceção        | `error_type`       | Causa típica                                            |
+| -------------- | ------------------ | ------------------------------------------------------- |
+| `ValueError`   | `validation_error` | Vídeo muito longo, exercício inválido, gravação frontal |
+| `RuntimeError` | `invalid_file`     | OpenCV não conseguiu abrir o vídeo                      |
+| `Exception`    | `processing_error` | Erros inesperados de pipeline                           |
 
 O campo `error_type` é retornado junto com `message` no `GET /status/{job_id}`.
 
@@ -370,9 +373,9 @@ com especialistas de educação física e fisioterapia.
 
 ```python
 # squat
-JOELHO_MINIMO_SQUAT    = 70    # graus no ponto mais baixo
-JOELHO_MAXIMO_SQUAT    = 100
-QUADRIL_MINIMO_SQUAT   = 80
+JOELHO_MINIMO_SQUAT    = 30    # graus no ponto mais baixo
+JOELHO_MAXIMO_SQUAT    = 80
+QUADRIL_MINIMO_SQUAT   = 45
 TORNOZELO_MINIMO_SQUAT = 60    # dorsiflexão mínima no ponto mais baixo
 TORNOZELO_MAXIMO_SQUAT = 90
 

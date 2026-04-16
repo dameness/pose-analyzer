@@ -50,9 +50,9 @@ KEYPOINTS_POR_LADO = {
 # ---------------------------------------------------------------------------
 
 # Squat
-JOELHO_MINIMO_SQUAT    = 70    # ângulo mínimo aceitável no ponto mais baixo
-JOELHO_MAXIMO_SQUAT    = 100   # ângulo máximo aceitável no ponto mais baixo
-QUADRIL_MINIMO_SQUAT   = 80
+JOELHO_MINIMO_SQUAT    = 30    # ângulo mínimo aceitável no ponto mais baixo
+JOELHO_MAXIMO_SQUAT    = 80   # ângulo máximo aceitável no ponto mais baixo
+QUADRIL_MINIMO_SQUAT   = 45
 TORNOZELO_MINIMO_SQUAT = 60    # dorsiflexão mínima no ponto mais baixo
 TORNOZELO_MAXIMO_SQUAT = 90    # dorsiflexão máxima
 
