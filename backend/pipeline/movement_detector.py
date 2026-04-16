@@ -7,11 +7,29 @@ ociosos no início e no final da gravação.
 """
 
 from pipeline.angle_calculator import calcular_angulo
-from pipeline.postural_checker import KEYPOINTS_POR_LADO
+from pipeline.postural_checker import (
+    KEYPOINTS_POR_LADO,
+    COTOVELO_ESQ, COTOVELO_DIR,
+    JOELHO_ESQ,   JOELHO_DIR,
+    OMBRO_ESQ,    OMBRO_DIR,
+    QUADRIL_ESQ,  QUADRIL_DIR,
+    TORNOZELO_ESQ, TORNOZELO_DIR,
+)
+from pipeline.side_detector import RATIO_LIMIAR
 
 # ---------------------------------------------------------------------------
 # Constantes de configuração
 # ---------------------------------------------------------------------------
+
+# Pares (esquerdo, direito) usados para verificar orientação lateral por frame.
+# Espelha _PARES_KEYPOINTS de side_detector.py.
+_PARES_ORIENTACAO = [
+    (OMBRO_ESQ,     OMBRO_DIR),
+    (COTOVELO_ESQ,  COTOVELO_DIR),
+    (QUADRIL_ESQ,   QUADRIL_DIR),
+    (JOELHO_ESQ,    JOELHO_DIR),
+    (TORNOZELO_ESQ, TORNOZELO_DIR),
+]
 
 JANELA_SUAVIZACAO = 5         # moving average para filtrar jitter do MediaPipe
 FRAMES_CONSECUTIVOS = 5       # frames seguidos com ângulo diminuindo
@@ -142,6 +160,76 @@ def _encontrar_fim(
 
 
 # ---------------------------------------------------------------------------
+# Orientação lateral por frame
+# ---------------------------------------------------------------------------
+
+def _frame_orientacao_valida(keypoints: list, side: str) -> bool:
+    """
+    Retorna True se o frame exibe o lado correto com visibilidade suficiente.
+    Usa a mesma lógica de razão do side_detector.
+    """
+    vis_esq = []
+    vis_dir = []
+    for idx_esq, idx_dir in _PARES_ORIENTACAO:
+        vis_esq.append(keypoints[idx_esq]["visibility"])
+        vis_dir.append(keypoints[idx_dir]["visibility"])
+
+    media_esq = sum(vis_esq) / len(vis_esq)
+    media_dir = sum(vis_dir) / len(vis_dir)
+
+    if media_dir < 0.01:
+        return False
+
+    ratio = media_esq / media_dir
+    return ratio > RATIO_LIMIAR if side == "left" else ratio < 1.0 / RATIO_LIMIAR
+
+
+def _encontrar_janela_orientacao(
+    keypoints_por_frame: list,
+    side: str,
+) -> tuple[int, int]:
+    """
+    Encontra o primeiro e o último frame onde o usuário está corretamente
+    orientado (razão de visibilidade satisfaz RATIO_LIMIAR para o lado dado).
+
+    Para ser robusto contra jitter, exige FRAMES_CONSECUTIVOS frames válidos
+    seguidos antes de declarar início/fim da janela válida.
+
+    Retorna (inicio, fim) como índices no vetor original.
+    Retorna (0, len(keypoints_por_frame)) se não for possível determinar.
+    """
+    total = len(keypoints_por_frame)
+
+    validos = [
+        False if kps is None else _frame_orientacao_valida(kps, side)
+        for kps in keypoints_por_frame
+    ]
+
+    # Início: primeiro frame da primeira sequência de FRAMES_CONSECUTIVOS válidos
+    inicio = 0
+    encontrou_inicio = False
+    for i in range(total - FRAMES_CONSECUTIVOS + 1):
+        if all(validos[i : i + FRAMES_CONSECUTIVOS]):
+            inicio = i
+            encontrou_inicio = True
+            break
+
+    # Fim: último frame da última sequência de FRAMES_CONSECUTIVOS válidos
+    fim = total
+    encontrou_fim = False
+    for i in range(total - FRAMES_CONSECUTIVOS, -1, -1):
+        if all(validos[i : i + FRAMES_CONSECUTIVOS]):
+            fim = i + FRAMES_CONSECUTIVOS
+            encontrou_fim = True
+            break
+
+    if not encontrou_inicio or not encontrou_fim:
+        return 0, total
+
+    return inicio, fim
+
+
+# ---------------------------------------------------------------------------
 # Função pública
 # ---------------------------------------------------------------------------
 
@@ -170,7 +258,14 @@ def detectar_inicio_movimento(
     # corresponde ao índice 0 do original (primeira janela completa)
     offset = 0
 
-    return _encontrar_inicio(suavizados, indices, offset)
+    inicio_angulo = _encontrar_inicio(suavizados, indices, offset)
+
+    # Refinamento: o exercício só começa quando o usuário está corretamente
+    # orientado. Frames com razão de visibilidade fora de RATIO_LIMIAR indicam
+    # que o usuário ainda não assumiu (ou já abandonou) o perfil lateral.
+    inicio_orientacao, _ = _encontrar_janela_orientacao(keypoints_por_frame, side)
+
+    return max(inicio_angulo, inicio_orientacao)
 
 
 def detectar_fim_movimento(
@@ -196,7 +291,10 @@ def detectar_fim_movimento(
     suavizados = _suavizar(angulos, JANELA_SUAVIZACAO)
     frame_fim = _encontrar_fim(suavizados, indices)
 
-    if frame_fim is None:
-        return total
+    fim_angulo = total if frame_fim is None else min(total, frame_fim)
 
-    return min(total, frame_fim)
+    # Refinamento: descartar frames do final onde o usuário já saiu do perfil
+    # lateral correto (está se virando, saindo do enquadramento, etc.).
+    _, fim_orientacao = _encontrar_janela_orientacao(keypoints_por_frame, side)
+
+    return min(fim_angulo, fim_orientacao)
