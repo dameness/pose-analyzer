@@ -399,8 +399,8 @@ OMBRO_MAXIMO_PUSHUP    = 70
 QUADRIL_MINIMO_PUSHUP  = 160   # quadril deve estar estendido (corpo reto)
 
 # situp
-QUADRIL_MINIMO_SITUP   = 80
-QUADRIL_MAXIMO_SITUP   = 110
+QUADRIL_MINIMO_SITUP   = 40
+QUADRIL_MAXIMO_SITUP   = 125
 COLUNA_MINIMO_SITUP    = 60    # ângulo nariz→centro_ombros→centro_quadris na subida
 COLUNA_MAXIMO_SITUP    = 120
 ```
