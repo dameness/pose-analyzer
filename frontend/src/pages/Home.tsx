@@ -314,7 +314,7 @@ export function Home() {
 
       {/* Footer */}
       <footer className="text-center py-6 text-xs text-gray-400 dark:text-gray-600">
-        TCC — Bacharelado em Ciência da Computação · IFSul Câmpus Passo Fundo
+        Pose Analyzer
       </footer>
     </div>
   );

@@ -215,7 +215,7 @@ correção do movimento.
 ### `pipeline/postural_checker.py`
 
 Lógica de negócio — define o que é correto/incorreto para cada exercício.
-Este é o módulo que mais vai crescer ao longo do TCC.
+Este é o módulo que mais vai crescer ao longo do projeto.
 
 Estrutura:
 

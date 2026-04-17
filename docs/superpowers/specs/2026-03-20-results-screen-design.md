@@ -1,7 +1,7 @@
 # Tela de Resultados — Design Spec
 
 **Data:** 2026-03-20
-**Projeto:** Pose Analyzer (TCC Bernardo Damiani)
+**Projeto:** Pose Analyzer
 
 ---
 

@@ -1,13 +1,10 @@
-# Pose Analyzer — TCC Bernardo Damiani
+# Pose Analyzer
 
 ## Visão geral
 
 Sistema de análise postural de exercícios físicos usando MediaPipe.
 O usuário seleciona um exercício, envia um vídeo, e recebe feedback
 visual indicando quais articulações estão corretas ou com erros posturais.
-
-**Projeto acadêmico:** TCC de Bacharelado em Ciência da Computação —
-Instituto Federal Sul-rio-grandense, Câmpus Passo Fundo.
 
 ---
 
