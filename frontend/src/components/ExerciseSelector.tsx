@@ -46,19 +46,17 @@ export function ExerciseSelector({ selected, onSelect }: ExerciseSelectorProps) 
             aria-pressed={isSelected}
             className={[
               'relative flex flex-col items-center gap-4 rounded-2xl border-2 p-6 transition-all duration-200',
-              'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 focus-visible:ring-offset-2',
-              'hover:border-indigo-400 hover:shadow-lg hover:-translate-y-0.5 cursor-pointer',
+              'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-2',
+              'hover:border-accent hover:shadow-lg hover:-translate-y-0.5 cursor-pointer',
               isSelected
-                ? 'border-indigo-500 bg-indigo-50 shadow-md dark:bg-indigo-950/40 dark:border-indigo-400'
-                : 'border-gray-200 bg-white shadow-sm dark:border-gray-700 dark:bg-gray-800/50',
+                ? 'border-accent bg-accent-subtle shadow-md'
+                : 'border-line bg-surface shadow-sm',
             ].join(' ')}
           >
             <Icon
               className={[
                 'w-12 h-12 transition-colors duration-200',
-                isSelected
-                  ? 'text-indigo-600 dark:text-indigo-400'
-                  : 'text-gray-400 dark:text-gray-500',
+                isSelected ? 'text-accent' : 'text-muted',
               ].join(' ')}
             />
 
@@ -66,22 +64,16 @@ export function ExerciseSelector({ selected, onSelect }: ExerciseSelectorProps) 
               <span
                 className={[
                   'text-lg font-semibold transition-colors duration-200',
-                  isSelected
-                    ? 'text-indigo-700 dark:text-indigo-300'
-                    : 'text-gray-800 dark:text-gray-100',
+                  isSelected ? 'text-accent' : 'text-fg',
                 ].join(' ')}
               >
                 {label}
               </span>
-              <span className="text-sm text-gray-500 dark:text-gray-400 leading-snug">
-                {description}
-              </span>
+              <span className="text-sm text-muted leading-snug">{description}</span>
               <span
                 className={[
                   'mt-1 text-xs font-medium px-2 py-0.5 rounded-full transition-colors duration-200',
-                  isSelected
-                    ? 'bg-indigo-100 text-indigo-600 dark:bg-indigo-900/60 dark:text-indigo-300'
-                    : 'bg-gray-100 text-gray-500 dark:bg-gray-700 dark:text-gray-400',
+                  isSelected ? 'bg-accent-subtle text-accent' : 'bg-raised text-muted',
                 ].join(' ')}
               >
                 {joints}
@@ -89,9 +81,9 @@ export function ExerciseSelector({ selected, onSelect }: ExerciseSelectorProps) 
             </div>
 
             {isSelected && (
-              <span className="absolute top-3 right-3 w-5 h-5 rounded-full bg-indigo-500 flex items-center justify-center">
+              <span className="absolute top-3 right-3 w-5 h-5 rounded-full bg-accent flex items-center justify-center">
                 <svg
-                  className="w-3 h-3 text-white"
+                  className="w-3 h-3 text-surface"
                   fill="none"
                   viewBox="0 0 12 12"
                   aria-hidden="true"
