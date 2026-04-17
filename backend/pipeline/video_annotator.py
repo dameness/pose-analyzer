@@ -165,12 +165,30 @@ def anotar_video(
     largura = int(cap.get(cv2.CAP_PROP_FRAME_WIDTH))
     altura  = int(cap.get(cv2.CAP_PROP_FRAME_HEIGHT))
 
+    # WebM from browsers sometimes reports 0 dimensions via metadata; read a frame to get real size
+    if largura == 0 or altura == 0:
+        ret, primeiro_frame = cap.read()
+        if ret:
+            altura, largura = primeiro_frame.shape[:2]
+        cap.set(cv2.CAP_PROP_POS_FRAMES, 0)
+
+    # yuv420p requires even dimensions; crop 1px if odd (libx264 fails otherwise)
+    largura_enc = largura - (largura % 2)
+    altura_enc  = altura  - (altura  % 2)
+
     infos_articulacoes = _construir_info_articulacoes(exercise, side, joint_results)
 
+    # PyAV's average_rate reads actual fps from the container — OpenCV's CAP_PROP_FPS
+    # misreads the WebM millisecond timebase as 1000fps, causing accelerated output
+    with av.open(video_path) as _c:
+        _vs = _c.streams.video[0]
+        _rate = float(_vs.average_rate or _vs.guessed_rate or 0)
+    fps_enc = int(round(_rate)) if 1 <= _rate <= 120 else (int(fps) if 1 <= fps <= 120 else 30)
+
     container = av.open(output_path, mode="w")
-    stream = container.add_stream("h264", rate=int(fps))
-    stream.width  = largura
-    stream.height = altura
+    stream = container.add_stream("h264", rate=fps_enc)
+    stream.width  = largura_enc
+    stream.height = altura_enc
     stream.pix_fmt = "yuv420p"
 
     try:
@@ -186,6 +204,8 @@ def anotar_video(
                 _anotar_frame(frame, keypoints, infos_articulacoes, largura, altura)
 
             frame_rgb = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
+            # Crop to even dimensions if needed
+            frame_rgb = frame_rgb[:altura_enc, :largura_enc]
             av_frame = av.VideoFrame.from_ndarray(frame_rgb, format="rgb24")
             av_frame.pts = i
             for packet in stream.encode(av_frame):
