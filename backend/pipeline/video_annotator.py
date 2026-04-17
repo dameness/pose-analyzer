@@ -153,6 +153,7 @@ def anotar_video(
     frame_fim: int,
     output_path: str,
     side: str = "left",
+    keypoints_para_angulos: list | None = None,
 ) -> None:
     """
     Lê o vídeo original e grava uma versão anotada com o esqueleto MediaPipe.
@@ -199,9 +200,14 @@ def anotar_video(
                 break
 
             keypoints = keypoints_completos[i] if i < len(keypoints_completos) else None
+            kp_angulo = (
+                keypoints_para_angulos[i]
+                if keypoints_para_angulos is not None and i < len(keypoints_para_angulos)
+                else keypoints
+            )
 
             if keypoints is not None and frame_inicio <= i < frame_fim:
-                _anotar_frame(frame, keypoints, infos_articulacoes, largura, altura)
+                _anotar_frame(frame, keypoints, kp_angulo, infos_articulacoes, largura, altura)
 
             frame_rgb = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
             # Crop to even dimensions if needed
@@ -223,6 +229,7 @@ def anotar_video(
 def _anotar_frame(
     frame,
     keypoints: list[dict],
+    keypoints_angulo: list[dict],
     infos_articulacoes: list[dict],
     largura: int,
     altura: int,
@@ -284,7 +291,7 @@ def _anotar_frame(
         cv2.circle(frame, pt_v, _RAIO_ANEL, cor, espessura_anel)
         cv2.circle(frame, pt_v, _RAIO_LANDMARK, cor, -1)
 
-        angulo = _calcular_angulo_frame(info, keypoints)
+        angulo = _calcular_angulo_frame(info, keypoints_angulo)
         if angulo is None:
             continue
 

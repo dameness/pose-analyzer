@@ -60,6 +60,9 @@ def processar_video(video_path: str, exercise: str, annotated_output_path: str |
     # Corrigir perspectiva — ajusta X para compensar rotação parcial
     keypoints_por_frame = corrigir_perspectiva(keypoints_por_frame, side)
 
+    # Preservar keypoints corrigidos (pré-trim) para labels de ângulo no vídeo
+    keypoints_corrigidos_completos = list(keypoints_por_frame)
+
     # Detectar início e fim do movimento e descartar frames ociosos
     frame_inicio = detectar_inicio_movimento(keypoints_por_frame, exercise, side)
     frame_fim = detectar_fim_movimento(keypoints_por_frame, exercise, side)
@@ -83,6 +86,7 @@ def processar_video(video_path: str, exercise: str, annotated_output_path: str |
             video_path, keypoints_completos, resultado["joint_results"],
             exercise, fps, frame_inicio, frame_fim, annotated_output_path,
             side=side,
+            keypoints_para_angulos=keypoints_corrigidos_completos,
         )
 
     theta_medio = calcular_theta_medio(keypoints_por_frame, side)
