@@ -24,30 +24,25 @@ export function AnalysisResult({ result, onReset }: AnalysisResultProps) {
       <div
         className={[
           'flex flex-col items-center gap-2 rounded-2xl px-6 py-6 text-center',
-          correct ? 'bg-green-50 dark:bg-green-950/30' : 'bg-red-50 dark:bg-red-950/30',
+          correct ? 'bg-success-subtle' : 'bg-error-subtle',
         ].join(' ')}
       >
         {correct ? (
-          <CheckCircle2 className="w-10 h-10 text-green-600 dark:text-green-400" />
+          <CheckCircle2 className="w-10 h-10 text-success" />
         ) : (
-          <XCircle className="w-10 h-10 text-red-600 dark:text-red-400" />
+          <XCircle className="w-10 h-10 text-error" />
         )}
-        <p
-          className={[
-            'text-xl font-bold',
-            correct ? 'text-green-800 dark:text-green-300' : 'text-red-800 dark:text-red-300',
-          ].join(' ')}
-        >
+        <p className={['text-xl font-bold', correct ? 'text-success' : 'text-error'].join(' ')}>
           {correct ? 'Execução Correta' : 'Execução Incorreta'}
         </p>
-        <p className="text-sm text-gray-500 dark:text-gray-400">
+        <p className="text-sm text-muted">
           {confidence}% de confiança · {result.frames_analyzed} frames analisados
         </p>
       </div>
 
       {/* 2. Joint grid */}
       <div className="flex flex-col gap-3">
-        <h3 className="text-sm font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide">
+        <h3 className="text-sm font-semibold text-muted uppercase tracking-wide">
           Articulações
         </h3>
         <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
@@ -61,17 +56,17 @@ export function AnalysisResult({ result, onReset }: AnalysisResultProps) {
         </div>
       </div>
 
-      {/* 3. Error list (only when errors exist) */}
+      {/* 3. Error list */}
       {result.errors.length > 0 && (
         <div className="flex flex-col gap-3">
-          <h3 className="text-sm font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide">
+          <h3 className="text-sm font-semibold text-muted uppercase tracking-wide">
             Erros detectados
           </h3>
-          <div className="flex gap-3 rounded-2xl bg-amber-50 dark:bg-amber-950/30 px-4 py-4">
-            <AlertTriangle className="w-5 h-5 text-amber-600 dark:text-amber-400 shrink-0 mt-0.5" />
+          <div className="flex gap-3 rounded-2xl bg-warning-subtle px-4 py-4">
+            <AlertTriangle className="w-5 h-5 text-warning shrink-0 mt-0.5" />
             <ul className="flex flex-col gap-1">
               {result.errors.map((error, i) => (
-                <li key={i} className="text-sm text-amber-800 dark:text-amber-300">
+                <li key={i} className="text-sm text-warning">
                   {error}
                 </li>
               ))}
@@ -83,10 +78,10 @@ export function AnalysisResult({ result, onReset }: AnalysisResultProps) {
       {/* 4. Angle chart */}
       {Object.keys(result.joint_angles).length > 0 && (
         <div className="flex flex-col gap-3">
-          <h3 className="text-sm font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide">
+          <h3 className="text-sm font-semibold text-muted uppercase tracking-wide">
             Ângulos por frame
           </h3>
-          <div className="rounded-2xl bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 p-4">
+          <div className="rounded-2xl bg-surface border border-line p-4">
             <AngleChart jointAngles={result.joint_angles} />
           </div>
         </div>
@@ -98,17 +93,17 @@ export function AnalysisResult({ result, onReset }: AnalysisResultProps) {
           const videoSrc = buildVideoUrl(result.video_url);
           return (
             <div className="flex flex-col gap-3">
-              <h3 className="text-sm font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide">
+              <h3 className="text-sm font-semibold text-muted uppercase tracking-wide">
                 Vídeo anotado
               </h3>
-              <div className="rounded-2xl overflow-hidden border border-gray-200 dark:border-gray-700">
+              <div className="rounded-2xl overflow-hidden border border-line">
                 <video src={videoSrc} controls className="w-full" />
               </div>
               <div className="flex justify-center">
                 <a
                   href={videoSrc}
                   download="video_anotado.mp4"
-                  className="flex items-center gap-2 px-4 py-2 rounded-xl border border-gray-300 dark:border-gray-600 text-sm font-medium text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors"
+                  className="flex items-center gap-2 px-4 py-2 rounded-xl border border-line text-sm font-medium text-fg hover:bg-subtle transition-colors"
                 >
                   Baixar vídeo anotado
                 </a>
@@ -122,7 +117,7 @@ export function AnalysisResult({ result, onReset }: AnalysisResultProps) {
         <button
           type="button"
           onClick={onReset}
-          className="flex items-center gap-2 px-6 py-3 rounded-xl bg-indigo-600 text-white font-semibold text-sm hover:bg-indigo-700 shadow-md hover:shadow-lg hover:-translate-y-0.5 transition-all duration-200 cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 focus-visible:ring-offset-2"
+          className="flex items-center gap-2 px-6 py-3 rounded-xl bg-brand text-brand-fg font-semibold text-sm hover:bg-brand/90 shadow-md hover:shadow-lg hover:-translate-y-0.5 transition-all duration-200 cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-2"
         >
           <RotateCcw className="w-4 h-4" />
           Analisar novamente
