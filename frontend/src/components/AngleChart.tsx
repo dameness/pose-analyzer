@@ -1,14 +1,15 @@
 import { Legend, Line, LineChart, ResponsiveContainer, Tooltip, XAxis, YAxis } from 'recharts';
 import type { AngleChartProps } from '../types';
 
-const LINE_COLORS = ['#6366f1', '#10b981', '#f59e0b', '#ef4444', '#3b82f6', '#8b5cf6'];
+/* Token-aligned categorical colors for chart lines.
+   Recharts stroke requires resolved strings, not CSS vars. */
+const CHART_COLORS = ['#5e6ad2', '#27a644', '#d97706', '#eb5757', '#0070f3', '#7170ff'];
 
 export function AngleChart({ jointAngles }: AngleChartProps) {
   const joints = Object.entries(jointAngles).filter(([, values]) => values.length > 0);
 
   if (joints.length === 0) return null;
 
-  // Build data array: one object per frame index, with each joint as a key
   const frameCount = Math.max(...joints.map(([, v]) => v.length));
   const data = Array.from({ length: frameCount }, (_, i) => {
     const point: Record<string, number> = { frame: i + 1 };
@@ -38,7 +39,7 @@ export function AngleChart({ jointAngles }: AngleChartProps) {
               key={joint}
               type="monotone"
               dataKey={joint}
-              stroke={LINE_COLORS[index % LINE_COLORS.length]}
+              stroke={CHART_COLORS[index % CHART_COLORS.length]}
               dot={false}
               strokeWidth={2}
             />
