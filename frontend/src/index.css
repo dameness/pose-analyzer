@@ -1,16 +1,94 @@
 @import 'tailwindcss';
+@import './tokens.css';
 
 @variant dark (&:where(.dark, .dark *));
 
-@theme {
-  --color-brand: #6366f1;
-  --color-brand-light: #818cf8;
-  --font-sans: system-ui, 'Segoe UI', Roboto, sans-serif;
+/* ===== Semantic tokens — light ===== */
+:root {
+  --surface:         #ffffff;
+  --subtle:          #f8f8f8;
+  --raised:          #f4f4f4;
+
+  --fg:              #282a30;
+  --fg-secondary:    #3c4149;
+  --fg-muted:        #6f6e77;
+
+  --line:            #e9e8ea;
+  --line-strong:     #dcdbdd;
+
+  --brand:           #282a30;
+  --brand-fg:        #ffffff;
+  --accent:          #5e6ad2;
+  --accent-subtle:   rgba(94, 106, 210, 0.08);
+
+  --success:         #27a644;
+  --success-subtle:  #f0faf2;
+  --error:           #eb5757;
+  --error-subtle:    #fff5f5;
+  --warning:         #d97706;
+  --warning-subtle:  #fffbeb;
+}
+
+/* ===== Semantic tokens — dark ===== */
+.dark {
+  --surface:         #000000;
+  --subtle:          #0a0a0a;
+  --raised:          #111111;
+
+  --fg:              #ffffff;
+  --fg-secondary:    #a1a1a1;
+  --fg-muted:        #666666;
+
+  --line:            #1a1a1a;
+  --line-strong:     #333333;
+
+  --brand:           #ffffff;
+  --brand-fg:        #000000;
+  --accent:          #e0e0e0;
+  --accent-subtle:   rgba(255, 255, 255, 0.08);
+
+  --success:         oklch(64.58% 0.199 147.27);
+  --success-subtle:  rgba(39, 166, 68, 0.10);
+  --error:           oklch(62.56% 0.2277 23.03);
+  --error-subtle:    rgba(235, 87, 87, 0.10);
+  --warning:         #f5a623;
+  --warning-subtle:  rgba(245, 166, 35, 0.10);
+}
+
+/* ===== Tailwind theme bridge ===== */
+/* @theme inline: utilities reference the CSS var at paint time, not a baked value. */
+/* This is what makes light/dark switching work without any dark: prefixes.         */
+@theme inline {
+  --color-surface:         var(--surface);
+  --color-subtle:          var(--subtle);
+  --color-raised:          var(--raised);
+
+  --color-fg:              var(--fg);
+  --color-secondary:       var(--fg-secondary);
+  --color-muted:           var(--fg-muted);
+
+  --color-line:            var(--line);
+  --color-strong:          var(--line-strong);
+
+  --color-brand:           var(--brand);
+  --color-brand-fg:        var(--brand-fg);
+  --color-accent:          var(--accent);
+  --color-accent-subtle:   var(--accent-subtle);
+
+  --color-success:         var(--success);
+  --color-success-subtle:  var(--success-subtle);
+  --color-error:           var(--error);
+  --color-error-subtle:    var(--error-subtle);
+  --color-warning:         var(--warning);
+  --color-warning-subtle:  var(--warning-subtle);
+
+  --font-sans: 'Inter Variable', 'Inter', system-ui, sans-serif;
 }
 
 body {
   margin: 0;
   font-family: var(--font-sans);
+  font-feature-settings: 'cv01', 'ss03';
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
 }
