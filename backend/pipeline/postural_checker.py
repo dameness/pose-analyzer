@@ -57,9 +57,9 @@ TORNOZELO_MINIMO_SQUAT = 60    # dorsiflexão mínima no ponto mais baixo
 TORNOZELO_MAXIMO_SQUAT = 90    # dorsiflexão máxima
 
 # Push-up
-COTOVELO_MINIMO_PUSHUP = 80
-COTOVELO_MAXIMO_PUSHUP = 100
-OMBRO_MINIMO_PUSHUP    = 30    # ângulo mínimo no ombro na descida
+COTOVELO_MINIMO_PUSHUP = 40
+COTOVELO_MAXIMO_PUSHUP = 180
+OMBRO_MINIMO_PUSHUP    = 0    # ângulo mínimo no ombro na descida
 OMBRO_MAXIMO_PUSHUP    = 70    # ângulo máximo no ombro na descida
 QUADRIL_MINIMO_PUSHUP  = 160   # quadril deve estar estendido (corpo reto)
 
