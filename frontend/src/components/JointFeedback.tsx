@@ -7,8 +7,8 @@ export function JointFeedback({ joint, correct }: JointFeedbackProps) {
       className={[
         'flex items-center gap-2 rounded-xl px-3 py-2 text-sm font-medium',
         correct
-          ? 'bg-green-50 text-green-800 dark:bg-green-950/30 dark:text-green-300'
-          : 'bg-red-50 text-red-800 dark:bg-red-950/30 dark:text-red-300',
+          ? 'bg-success-subtle text-success'
+          : 'bg-error-subtle text-error',
       ].join(' ')}
     >
       {correct ? (
