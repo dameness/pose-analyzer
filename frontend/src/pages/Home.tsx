@@ -56,22 +56,19 @@ export function Home() {
 
   function handleReset() {
     analysis.reset();
-    // step stays 'video' — VideoInput re-enables and user can resubmit
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 dark:bg-gray-900 flex flex-col">
+    <div className="min-h-screen bg-subtle flex flex-col">
       {/* Header */}
-      <header className="bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700 shadow-sm">
+      <header className="bg-surface border-b border-line shadow-sm">
         <div className="max-w-3xl mx-auto px-4 py-4 flex items-center gap-3">
           <div className="w-10 h-10 rounded-xl flex items-center justify-center shrink-0">
             <img src="favicon.svg" alt="Dumbbell with a Brain" />
           </div>
           <div className="flex-1">
-            <h1 className="text-base font-semibold text-gray-900 dark:text-gray-100 leading-tight">
-              Pose Analyzer
-            </h1>
-            <p className="text-xs text-gray-500 dark:text-gray-400">Análise postural com IA</p>
+            <h1 className="text-base font-semibold text-fg leading-tight">Pose Analyzer</h1>
+            <p className="text-xs text-muted">Análise postural com IA</p>
           </div>
           <button
             type="button"
@@ -79,7 +76,7 @@ export function Home() {
             aria-label={dark ? 'Ativar modo claro' : 'Ativar modo escuro'}
             className={[
               'relative w-14 h-7 rounded-full transition-colors duration-300 cursor-pointer shrink-0',
-              dark ? 'bg-indigo-600' : 'bg-gray-300',
+              dark ? 'bg-brand' : 'bg-raised',
             ].join(' ')}
           >
             <span
@@ -89,9 +86,9 @@ export function Home() {
               ].join(' ')}
             >
               {dark ? (
-                <Moon className="w-3 h-3 text-indigo-600" />
+                <Moon className="w-3 h-3 text-brand-fg" />
               ) : (
-                <Sun className="w-3 h-3 text-gray-400" />
+                <Sun className="w-3 h-3 text-muted" />
               )}
             </span>
           </button>
@@ -102,16 +99,15 @@ export function Home() {
       <main className="flex-1 max-w-3xl mx-auto w-full px-4 py-10 flex flex-col gap-8">
         {/* Step indicator */}
         <div className="flex items-center gap-2 text-sm">
-          {/* Step 1 — clicável quando estiver no step 2 e análise idle */}
           <button
             type="button"
             onClick={step === 'video' && analysis.state.phase === 'idle' ? handleBack : undefined}
             disabled={!(step === 'video' && analysis.state.phase === 'idle')}
             className={[
               'flex items-center justify-center w-6 h-6 rounded-full text-xs font-semibold shrink-0 transition-colors',
-              step === 'select' ? 'bg-indigo-600 text-white' : 'bg-green-500 text-white',
+              step === 'select' ? 'bg-brand text-brand-fg' : 'bg-success text-white',
               step === 'video' && analysis.state.phase === 'idle'
-                ? 'cursor-pointer hover:ring-2 hover:ring-green-400 hover:ring-offset-1'
+                ? 'cursor-pointer hover:ring-2 hover:ring-success hover:ring-offset-1'
                 : 'cursor-default',
             ].join(' ')}
           >
@@ -123,18 +119,15 @@ export function Home() {
             disabled={!(step === 'video' && analysis.state.phase === 'idle')}
             className={[
               'font-medium transition-colors',
-              step === 'select'
-                ? 'text-gray-700 dark:text-gray-300'
-                : 'text-gray-400 dark:text-gray-500',
+              step === 'select' ? 'text-secondary' : 'text-muted',
               step === 'video' && analysis.state.phase === 'idle'
-                ? 'cursor-pointer hover:text-gray-700 dark:hover:text-gray-300'
+                ? 'cursor-pointer hover:text-secondary'
                 : 'cursor-default',
             ].join(' ')}
           >
             Escolha o exercício
           </button>
-          <span className="flex-1 h-px bg-gray-200 dark:bg-gray-700 ml-1" />
-          {/* Step 2 — clicável quando exercício selecionado, estiver no step 1 e análise idle */}
+          <span className="flex-1 h-px bg-line ml-1" />
           <button
             type="button"
             onClick={
@@ -148,12 +141,12 @@ export function Home() {
             className={[
               'flex items-center justify-center w-6 h-6 rounded-full text-xs font-semibold shrink-0 transition-colors',
               analysis.state.phase !== 'idle' && analysis.state.phase !== 'error'
-                ? 'bg-green-500 text-white'
+                ? 'bg-success text-white'
                 : step === 'video'
-                ? 'bg-indigo-600 text-white'
-                : 'border-2 border-gray-300 dark:border-gray-600 text-gray-400 dark:text-gray-500',
+                ? 'bg-brand text-brand-fg'
+                : 'border-2 border-line text-muted',
               selectedExercise !== null && step === 'select' && analysis.state.phase === 'idle'
-                ? 'cursor-pointer hover:border-indigo-400 hover:text-indigo-500 dark:hover:border-indigo-400 dark:hover:text-indigo-400'
+                ? 'cursor-pointer hover:border-accent hover:text-accent'
                 : 'cursor-default',
             ].join(' ')}
           >
@@ -176,26 +169,26 @@ export function Home() {
             className={[
               'transition-colors',
               analysis.state.phase !== 'idle' && analysis.state.phase !== 'error'
-                ? 'text-gray-400 dark:text-gray-500'
+                ? 'text-muted'
                 : step === 'video'
-                ? 'font-medium text-gray-700 dark:text-gray-300'
-                : 'text-gray-400 dark:text-gray-500',
+                ? 'font-medium text-secondary'
+                : 'text-muted',
               selectedExercise !== null && step === 'select' && analysis.state.phase === 'idle'
-                ? 'cursor-pointer hover:text-gray-700 dark:hover:text-gray-300'
+                ? 'cursor-pointer hover:text-secondary'
                 : 'cursor-default',
             ].join(' ')}
           >
             Enviar vídeo
           </button>
-          <span className="flex-1 h-px bg-gray-200 dark:bg-gray-700 ml-1" />
+          <span className="flex-1 h-px bg-line ml-1" />
           <span
             className={[
               'flex items-center justify-center w-6 h-6 rounded-full text-xs font-semibold shrink-0 transition-colors',
               analysis.state.phase === 'done'
-                ? 'bg-green-500 text-white'
+                ? 'bg-success text-white'
                 : analysis.state.phase === 'uploading' || analysis.state.phase === 'polling'
-                ? 'bg-indigo-600 text-white'
-                : 'border-2 border-gray-300 dark:border-gray-600 text-gray-400 dark:text-gray-500',
+                ? 'bg-brand text-brand-fg'
+                : 'border-2 border-line text-muted',
             ].join(' ')}
           >
             {analysis.state.phase === 'done' ? <Check className="w-3 h-3" /> : '3'}
@@ -204,8 +197,8 @@ export function Home() {
             className={[
               'transition-colors',
               analysis.state.phase === 'uploading' || analysis.state.phase === 'polling'
-                ? 'font-medium text-gray-700 dark:text-gray-300'
-                : 'text-gray-400 dark:text-gray-500',
+                ? 'font-medium text-secondary'
+                : 'text-muted',
             ].join(' ')}
           >
             Resultado
@@ -216,10 +209,10 @@ export function Home() {
         {step === 'select' && (
           <>
             <div className="flex flex-col gap-1">
-              <h2 className="text-2xl font-bold text-gray-900 dark:text-gray-100">
+              <h2 className="text-2xl font-bold text-fg">
                 Qual exercício você vai realizar?
               </h2>
-              <p className="text-gray-500 dark:text-gray-400">
+              <p className="text-muted">
                 Selecione o exercício para que a IA possa analisar sua postura corretamente.
               </p>
             </div>
@@ -233,10 +226,10 @@ export function Home() {
                 disabled={!selectedExercise}
                 className={[
                   'flex items-center gap-2 px-6 py-3 rounded-xl font-semibold text-sm transition-all duration-200',
-                  'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 focus-visible:ring-offset-2',
+                  'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-2',
                   selectedExercise
-                    ? 'bg-indigo-600 text-white hover:bg-indigo-700 shadow-md hover:shadow-lg hover:-translate-y-0.5 cursor-pointer'
-                    : 'bg-gray-200 text-gray-400 dark:bg-gray-700 dark:text-gray-500 cursor-not-allowed',
+                    ? 'bg-brand text-brand-fg hover:bg-brand/90 shadow-md hover:shadow-lg hover:-translate-y-0.5 cursor-pointer'
+                    : 'bg-raised text-muted cursor-not-allowed',
                 ].join(' ')}
               >
                 Continuar
@@ -246,16 +239,14 @@ export function Home() {
           </>
         )}
 
-        {/* Step 2: Video input — always mounted (hidden via CSS) once exercise selected, to preserve recorder state across back navigation */}
+        {/* Step 2: Video input */}
         {selectedExercise !== null && (
           <div className={step === 'video' ? 'flex flex-col gap-6' : 'hidden'}>
             <div className="flex flex-col gap-1">
-              <h2 className="text-2xl font-bold text-gray-900 dark:text-gray-100">
-                Grave ou envie o vídeo
-              </h2>
-              <p className="text-gray-500 dark:text-gray-400">
+              <h2 className="text-2xl font-bold text-fg">Grave ou envie o vídeo</h2>
+              <p className="text-muted">
                 Exercício selecionado:{' '}
-                <span className="font-medium text-indigo-600 dark:text-indigo-400">
+                <span className="font-medium text-accent">
                   {EXERCISE_LABELS[selectedExercise]}
                 </span>
               </p>
@@ -272,7 +263,7 @@ export function Home() {
                 type="button"
                 onClick={handleBack}
                 disabled={analysis.state.phase !== 'idle'}
-                className="flex items-center gap-2 px-4 py-2 rounded-xl text-sm text-gray-600 dark:text-gray-400 hover:text-gray-800 dark:hover:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer"
+                className="flex items-center gap-2 px-4 py-2 rounded-xl text-sm text-muted hover:text-secondary hover:bg-raised transition-colors disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer"
               >
                 <ArrowLeft className="w-4 h-4" />
                 Voltar
@@ -293,18 +284,16 @@ export function Home() {
 
         {/* Step 3c: Error */}
         {analysis.state.phase === 'error' && (
-          <div className="flex flex-col items-center gap-4 rounded-2xl bg-red-50 dark:bg-red-950/30 px-6 py-8 text-center">
-            <AlertCircle className="w-10 h-10 text-red-600 dark:text-red-400" />
+          <div className="flex flex-col items-center gap-4 rounded-2xl bg-error-subtle px-6 py-8 text-center">
+            <AlertCircle className="w-10 h-10 text-error" />
             <div className="flex flex-col gap-1">
-              <p className="text-lg font-semibold text-red-800 dark:text-red-300">
-                Erro na análise
-              </p>
-              <p className="text-sm text-red-600 dark:text-red-400">{analysis.state.error}</p>
+              <p className="text-lg font-semibold text-error">Erro na análise</p>
+              <p className="text-sm text-error">{analysis.state.error}</p>
             </div>
             <button
               type="button"
               onClick={handleReset}
-              className="flex items-center gap-2 px-5 py-2.5 rounded-xl bg-red-600 text-white font-semibold text-sm hover:bg-red-700 transition-colors cursor-pointer"
+              className="flex items-center gap-2 px-5 py-2.5 rounded-xl bg-error text-white font-semibold text-sm hover:bg-error/90 transition-colors cursor-pointer"
             >
               Tentar novamente
             </button>
@@ -313,9 +302,7 @@ export function Home() {
       </main>
 
       {/* Footer */}
-      <footer className="text-center py-6 text-xs text-gray-400 dark:text-gray-600">
-        Pose Analyzer
-      </footer>
+      <footer className="text-center py-6 text-xs text-muted">Pose Analyzer</footer>
     </div>
   );
 }
