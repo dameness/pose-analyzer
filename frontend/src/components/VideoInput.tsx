@@ -18,7 +18,7 @@ export function VideoInput({ recorder, onVideoReady, disabled = false }: VideoIn
   return (
     <div className="flex flex-col gap-4 w-full">
       {/* Toggle pill */}
-      <div className="flex bg-gray-100 dark:bg-gray-800 rounded-full p-1">
+      <div className="flex bg-subtle rounded-full p-1">
         {(['record', 'upload'] as InputMode[]).map((m) => (
           <button
             key={m}
@@ -27,10 +27,10 @@ export function VideoInput({ recorder, onVideoReady, disabled = false }: VideoIn
             disabled={disabled}
             className={[
               'flex-1 flex items-center justify-center gap-2 py-2 text-sm font-semibold rounded-full transition-all duration-200',
-              'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500',
+              'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent',
               mode === m
-                ? 'bg-indigo-600 text-white shadow-sm'
-                : 'text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200',
+                ? 'bg-brand text-brand-fg shadow-sm'
+                : 'text-muted hover:text-secondary',
               disabled ? 'cursor-not-allowed opacity-50' : 'cursor-pointer',
             ].join(' ')}
           >
@@ -57,8 +57,6 @@ export function VideoInput({ recorder, onVideoReady, disabled = false }: VideoIn
   );
 }
 
-// Sub-components defined below — implemented in Tasks 3 & 4
-
 function LivePreview({ streamRef }: { streamRef: React.RefObject<MediaStream | null> }) {
   const videoRef = useRef<HTMLVideoElement>(null);
   useEffect(() => {
@@ -72,7 +70,7 @@ function LivePreview({ streamRef }: { streamRef: React.RefObject<MediaStream | n
       autoPlay
       muted
       playsInline
-      className="w-full rounded-t-2xl bg-gray-900 max-h-96 object-contain"
+      className="w-full rounded-t-2xl bg-raised max-h-96 object-contain"
     />
   );
 }
@@ -132,16 +130,16 @@ function RecordMode({
 
   if (state.status === 'idle') {
     return (
-      <div className="flex flex-col items-center gap-4 py-8 px-4 bg-gray-900 rounded-2xl">
-        <p className="text-sm text-gray-400 text-center">
+      <div className="flex flex-col items-center gap-4 py-8 px-4 bg-raised rounded-2xl">
+        <p className="text-sm text-muted text-center">
           Posicione-se de modo que seu corpo inteiro fique visível na câmera.
         </p>
-        {state.error && <p className="text-sm text-red-400 text-center">{state.error}</p>}
+        {state.error && <p className="text-sm text-error text-center">{state.error}</p>}
         <button
           type="button"
           onClick={startRecording}
           disabled={disabled}
-          className="flex items-center gap-2 px-6 py-3 bg-indigo-600 text-white rounded-xl font-semibold text-sm hover:bg-indigo-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer"
+          className="flex items-center gap-2 px-6 py-3 bg-brand text-brand-fg rounded-xl font-semibold text-sm hover:bg-brand/90 transition-colors disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer"
         >
           Iniciar gravação
         </button>
@@ -152,22 +150,21 @@ function RecordMode({
   if (state.status === 'recording' || state.status === 'paused') {
     const pausado = state.status === 'paused';
     return (
-      <div className="flex flex-col items-center gap-3 bg-gray-900 rounded-2xl overflow-hidden">
+      <div className="flex flex-col items-center gap-3 bg-raised rounded-2xl overflow-hidden">
         <LivePreview streamRef={streamRef} />
         <div className="flex flex-col items-center gap-3 pb-4">
-          <span className="text-white font-mono text-sm">{formatTime(elapsed)} / 00:30</span>
+          <span className="text-fg font-mono text-sm">{formatTime(elapsed)} / 00:30</span>
           {pausado && (
-            <span className="text-xs text-yellow-400 font-semibold uppercase tracking-wide">
+            <span className="text-xs text-warning font-semibold uppercase tracking-wide">
               Pausado
             </span>
           )}
           <div className="flex items-center gap-4">
-            {/* Botão pausa / retomar */}
             <button
               type="button"
               onClick={pausado ? resumeRecording : pauseRecording}
               disabled={disabled}
-              className="w-12 h-12 rounded-full bg-yellow-500 hover:bg-yellow-400 flex items-center justify-center transition-colors disabled:opacity-50 cursor-pointer"
+              className="w-12 h-12 rounded-full bg-warning hover:bg-warning/90 flex items-center justify-center transition-colors disabled:opacity-50 cursor-pointer"
               aria-label={pausado ? 'Retomar gravação' : 'Pausar gravação'}
             >
               {pausado ? (
@@ -176,12 +173,11 @@ function RecordMode({
                 <Pause className="w-5 h-5 text-white fill-white" />
               )}
             </button>
-            {/* Botão parar */}
             <button
               type="button"
               onClick={stopRecording}
               disabled={disabled}
-              className="w-14 h-14 rounded-full bg-red-500 hover:bg-red-600 flex items-center justify-center transition-colors disabled:opacity-50 cursor-pointer"
+              className="w-14 h-14 rounded-full bg-error hover:bg-error/90 flex items-center justify-center transition-colors disabled:opacity-50 cursor-pointer"
               aria-label="Parar gravação"
             >
               <span className="w-5 h-5 rounded-sm bg-white" />
@@ -196,15 +192,15 @@ function RecordMode({
   return (
     <div className="flex flex-col gap-3">
       {state.videoUrl && (
-        <video src={state.videoUrl} controls className="w-full rounded-2xl bg-gray-900 max-h-72" />
+        <video src={state.videoUrl} controls className="w-full rounded-2xl bg-raised max-h-72" />
       )}
-      {state.error && <p className="text-sm text-red-500">{state.error}</p>}
+      {state.error && <p className="text-sm text-error">{state.error}</p>}
       <div className="flex gap-3">
         <button
           type="button"
           onClick={reset}
           disabled={disabled}
-          className="flex-1 py-3 rounded-xl border-2 border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 font-semibold text-sm hover:border-gray-400 transition-colors disabled:opacity-50 cursor-pointer"
+          className="flex-1 py-3 rounded-xl border-2 border-line text-fg font-semibold text-sm hover:border-strong transition-colors disabled:opacity-50 cursor-pointer"
         >
           ↩ Regravar
         </button>
@@ -212,7 +208,7 @@ function RecordMode({
           type="button"
           onClick={handleConfirm}
           disabled={disabled || !state.videoBlob}
-          className="flex-1 py-3 rounded-xl bg-indigo-600 text-white font-semibold text-sm hover:bg-indigo-700 transition-colors disabled:opacity-50 cursor-pointer"
+          className="flex-1 py-3 rounded-xl bg-brand text-brand-fg font-semibold text-sm hover:bg-brand/90 transition-colors disabled:opacity-50 cursor-pointer"
         >
           Analisar →
         </button>
@@ -249,7 +245,6 @@ function UploadMode({
   function handleChange(e: React.ChangeEvent<HTMLInputElement>) {
     const picked = e.target.files?.[0];
     if (picked) handleFile(picked);
-    // reset input value so same file can be re-selected after "Trocar"
     e.target.value = '';
   }
 
@@ -258,7 +253,6 @@ function UploadMode({
     return `${(bytes / 1_000_000).toFixed(1)} MB`;
   }
 
-  // Single hidden input used for both dropzone click and "Trocar arquivo"
   const hiddenInput = (
     <input
       ref={inputRef}
@@ -284,18 +278,16 @@ function UploadMode({
         className={[
           'flex flex-col items-center gap-3 py-10 px-4 rounded-2xl border-2 border-dashed transition-colors',
           dragOver
-            ? 'border-indigo-500 bg-indigo-50 dark:bg-indigo-950/30'
-            : 'border-gray-300 dark:border-gray-600 bg-gray-50 dark:bg-gray-800/50',
-          disabled ? 'cursor-not-allowed opacity-50' : 'cursor-pointer hover:border-indigo-400',
+            ? 'border-accent bg-accent-subtle'
+            : 'border-line bg-subtle',
+          disabled ? 'cursor-not-allowed opacity-50' : 'cursor-pointer hover:border-accent',
         ].join(' ')}
       >
         {hiddenInput}
         <span className="text-3xl">📁</span>
-        <p className="text-sm font-semibold text-gray-700 dark:text-gray-300">
-          Arraste um vídeo aqui
-        </p>
-        <p className="text-xs text-gray-500 dark:text-gray-400">ou clique para selecionar</p>
-        <p className="text-xs text-gray-400 dark:text-gray-500">MP4, WebM ou MOV</p>
+        <p className="text-sm font-semibold text-fg">Arraste um vídeo aqui</p>
+        <p className="text-xs text-muted">ou clique para selecionar</p>
+        <p className="text-xs text-muted">MP4, WebM ou MOV</p>
       </div>
     );
   }
@@ -303,13 +295,11 @@ function UploadMode({
   return (
     <div className="flex flex-col gap-3">
       {hiddenInput}
-      <div className="flex items-center gap-3 p-4 bg-gray-50 dark:bg-gray-800 rounded-2xl border border-gray-200 dark:border-gray-700">
+      <div className="flex items-center gap-3 p-4 bg-subtle rounded-2xl border border-line">
         <span className="text-2xl shrink-0">🎬</span>
         <div className="flex-1 min-w-0">
-          <p className="text-sm font-semibold text-gray-800 dark:text-gray-100 truncate">
-            {file.name}
-          </p>
-          <p className="text-xs text-gray-500 dark:text-gray-400">{formatSize(file.size)}</p>
+          <p className="text-sm font-semibold text-fg truncate">{file.name}</p>
+          <p className="text-xs text-muted">{formatSize(file.size)}</p>
         </div>
       </div>
       <div className="flex gap-3">
@@ -317,7 +307,7 @@ function UploadMode({
           type="button"
           onClick={() => setFile(null)}
           disabled={disabled}
-          className="flex-1 py-3 rounded-xl border-2 border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 font-semibold text-sm hover:border-gray-400 transition-colors disabled:opacity-50 cursor-pointer"
+          className="flex-1 py-3 rounded-xl border-2 border-line text-fg font-semibold text-sm hover:border-strong transition-colors disabled:opacity-50 cursor-pointer"
         >
           ↩ Trocar arquivo
         </button>
@@ -325,7 +315,7 @@ function UploadMode({
           type="button"
           onClick={() => onVideoReady(file)}
           disabled={disabled}
-          className="flex-1 py-3 rounded-xl bg-indigo-600 text-white font-semibold text-sm hover:bg-indigo-700 transition-colors disabled:opacity-50 cursor-pointer"
+          className="flex-1 py-3 rounded-xl bg-brand text-brand-fg font-semibold text-sm hover:bg-brand/90 transition-colors disabled:opacity-50 cursor-pointer"
         >
           Analisar →
         </button>
