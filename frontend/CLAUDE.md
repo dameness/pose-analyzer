@@ -8,7 +8,7 @@ Leia também o `CLAUDE.md` na raiz do projeto para contexto geral.
 
 - React 19 + TypeScript
 - Vite
-- Tailwind CSS
+- Tailwind CSS v4 (`@tailwindcss/vite`)
 - Yarn
 - Recharts (gráfico de ângulos por frame)
 - lucide-react (ícones)
@@ -250,6 +250,70 @@ O hook expõe:
 
 ---
 
+## Design System — Tokens semânticos
+
+O projeto usa uma camada de tokens semânticos em `src/index.css` que mapeia
+variáveis CSS para utilitários Tailwind via `@theme inline`. Isso permite
+light/dark mode **sem nenhum prefixo `dark:`** nos componentes.
+
+### Arquitetura em três camadas
+
+```
+src/index.css
+  ├── :root { --surface, --fg, --brand, ... }   ← valores light
+  ├── .dark { --surface, --fg, --brand, ... }   ← valores dark
+  └── @theme inline { --color-surface: var(--surface); ... }  ← bridge Tailwind
+```
+
+O `useDarkMode` em `Home.tsx` alterna a classe `.dark` no `<html>` e persiste
+no `localStorage`. Componentes nunca precisam saber o tema atual.
+
+### Tokens disponíveis
+
+| Utilitário Tailwind | Uso |
+|---|---|
+| `bg-surface` / `text-surface` | Fundo de cards, modais, header |
+| `bg-subtle` | Fundo da página |
+| `bg-raised` | Fundo de inputs, áreas internas, contêiner de gravação |
+| `text-fg` | Texto principal |
+| `text-secondary` | Texto de suporte (subtítulos) |
+| `text-muted` | Texto secundário, placeholders, labels |
+| `border-line` | Bordas padrão |
+| `border-strong` | Bordas ao hover |
+| `bg-brand` / `text-brand` | Botão primário, step ativo (preto no light, branco no dark) |
+| `text-brand-fg` | Texto sobre fundo `bg-brand` |
+| `text-accent` / `border-accent` / `bg-accent` | Destaque (índigo #5e6ad2 no light) |
+| `bg-accent-subtle` | Fundo sutil do item selecionado |
+| `text-success` / `bg-success-subtle` | Feedback positivo |
+| `text-error` / `bg-error` / `bg-error-subtle` | Feedback negativo |
+| `text-warning` / `bg-warning` / `bg-warning-subtle` | Avisos |
+
+### Regras de estilização
+
+- **Nunca usar** `bg-gray-*`, `text-gray-*`, `bg-indigo-*`, `bg-green-*`, `bg-red-*`,
+  `bg-amber-*` ou qualquer prefixo `dark:` nos componentes — usar sempre os tokens acima.
+- Modificador de opacidade funciona normalmente: `hover:bg-brand/90`.
+- Recharts (`<Line stroke>`) **não aceita CSS vars** — usar o array `CHART_COLORS`
+  em `AngleChart.tsx` com os valores hex alinhados aos tokens.
+- Fonte: Inter Variable carregada via Google Fonts em `index.html`; aplicada via
+  `--font-sans` no `@theme inline`.
+
+### Exemplo de padrão correto
+
+```tsx
+// ✅ correto
+<button className="bg-brand text-brand-fg hover:bg-brand/90">
+<div className={isSelected ? 'border-accent bg-accent-subtle' : 'border-line bg-surface'}>
+<p className="text-muted">
+
+// ❌ errado
+<button className="bg-indigo-600 text-white dark:bg-indigo-500">
+<div className={isSelected ? 'border-indigo-500 bg-indigo-50 dark:bg-indigo-950/40' : ...}>
+<p className="text-gray-500 dark:text-gray-400">
+```
+
+---
+
 ## Testes
 
 Framework: **Vitest** + **React Testing Library** (jsdom).
@@ -293,6 +357,7 @@ Configuração relevante: `singleQuote`, `semi`, `tabWidth: 2`, `printWidth: 100
 - Não instanciar `useVideoRecorder` dentro de `VideoInput` — o hook pertence a `Home.tsx`
 - Não usar `global` nos arquivos de teste — usar `globalThis` (compatível com browser e Node)
 - Não estilizar com `style={{}}` inline — usar classes Tailwind
+- Não usar cores raw (`bg-gray-*`, `text-indigo-*`, etc.) nem `dark:` prefixes — usar tokens semânticos (ver seção Design System acima)
 - Não mapear nomes de articulações do inglês para português dentro do back-end —
   essa tradução é responsabilidade do front-end
 - Não usar `result.video_url` diretamente como `src` de `<video>` — sempre passar
