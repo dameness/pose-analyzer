@@ -21,6 +21,9 @@ COR_CORRETO   = (0, 200, 0)      # verde
 COR_INCORRETO = (0, 0, 220)      # vermelho
 COR_NEUTRO    = (180, 180, 180)  # cinza
 
+# Keypoints de face do MediaPipe Pose (nariz, olhos, orelhas, boca) — não exibidos
+_FACE_LANDMARKS = frozenset(range(11))
+
 # Geometria da anotação
 _RAIO_LANDMARK   = 5
 _RAIO_ANEL       = 14
@@ -256,8 +259,10 @@ def _anotar_frame(
         arestas_coloridas[frozenset({p1, v})] = cor
         arestas_coloridas[frozenset({v, p3})] = cor
 
-    # 1+2+3 — Desenhar todas as conexões do esqueleto
+    # 1+2+3 — Desenhar todas as conexões do esqueleto (exceto face)
     for a, b in _POSE_CONNECTIONS:
+        if a in _FACE_LANDMARKS or b in _FACE_LANDMARKS:
+            continue
         if a >= len(keypoints) or b >= len(keypoints):
             continue
         kp_a = keypoints[a]
@@ -269,9 +274,9 @@ def _anotar_frame(
         pt_b = (int(kp_b["x"] * largura), int(kp_b["y"] * altura))
         cv2.line(frame, pt_a, pt_b, cor, _ESPESSURA_LINHA)
 
-    # 4 — Landmarks neutros (referência visual)
-    for kp in keypoints:
-        if kp is None:
+    # 4 — Landmarks neutros (referência visual, exceto face)
+    for idx, kp in enumerate(keypoints):
+        if kp is None or idx in _FACE_LANDMARKS:
             continue
         cx = int(kp["x"] * largura)
         cy = int(kp["y"] * altura)
