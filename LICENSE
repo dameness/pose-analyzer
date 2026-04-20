@@ -1,0 +1,115 @@
+LICENÇA PROPRIETÁRIA
+Pose Analyzer
+Copyright (c) 2024–2026 Bernardo Damiani. Todos os direitos reservados.
+
+================================================================================
+
+TERMOS E CONDIÇÕES DE USO
+
+1. PROPRIEDADE INTELECTUAL
+
+   O software Pose Analyzer, incluindo seu código-fonte, código compilado,
+   documentação, interfaces gráficas, algoritmos, modelos de dados, designs
+   visuais e demais materiais associados (coletivamente, o "Software"), é
+   propriedade exclusiva de Bernardo Damiani ("Titular") e está protegido
+   pelas leis de direito autoral da República Federativa do Brasil (Lei
+   nº 9.610/1998), pela Lei de Propriedade Industrial (Lei nº 9.279/1996),
+   tratados internacionais de propriedade intelectual e demais legislações
+   aplicáveis.
+
+2. RESTRIÇÕES DE USO
+
+   É expressamente proibido, sem autorização prévia e por escrito do
+   Titular, qualquer ato que inclua, sem limitação:
+
+   a) Copiar, reproduzir ou duplicar o Software, total ou parcialmente,
+      em qualquer meio físico ou digital, temporário ou permanente;
+
+   b) Redistribuir, publicar, disponibilizar para download, vender,
+      alugar, sublicenciar ou de qualquer forma transferir o Software ou
+      cópias dele a terceiros, a título oneroso ou gratuito;
+
+   c) Modificar, adaptar, traduzir, localizar, criar obras derivadas,
+      incorporar em outros produtos ou realizar qualquer alteração no
+      Software ou em partes dele;
+
+   d) Realizar engenharia reversa, descompilar, desmontar ou de qualquer
+      outra forma tentar extrair o código-fonte de versões compiladas ou
+      ofuscadas do Software;
+
+   e) Usar o Software, total ou parcialmente, em produtos, serviços,
+      sistemas, competições, pesquisas acadêmicas publicadas ou qualquer
+      outro contexto externo sem autorização expressa e por escrito do
+      Titular;
+
+   f) Remover, ocultar, alterar ou sobrepor quaisquer avisos de direitos
+      autorais, marcas registradas, marcas de serviço ou outras
+      notificações de propriedade presentes no Software;
+
+   g) Usar o nome "Pose Analyzer", o nome "Bernardo Damiani" ou qualquer
+      marca associada ao Software para endossar ou promover produtos ou
+      serviços derivados sem autorização prévia por escrito.
+
+3. AUSÊNCIA DE CONCESSÃO DE LICENÇA
+
+   Este documento não concede ao usuário, leitor ou qualquer terceiro
+   nenhuma licença, implícita ou expressa, de qualquer natureza — incluindo,
+   sem limitação, licenças de direito autoral, patente, marca ou segredo
+   industrial — para usar, reproduzir, modificar ou distribuir o Software.
+   Qualquer uso não expressamente autorizado em contrato separado firmado
+   com o Titular constitui violação dos direitos autorais e poderá sujeitar
+   o infrator a responsabilidade civil (indenização por danos materiais e
+   morais) e criminal, nos termos dos artigos 184 e 186 do Código Penal
+   Brasileiro e dos artigos 102 a 110 da Lei nº 9.610/1998.
+
+4. EXCEÇÃO PARA DEPENDÊNCIAS DE TERCEIROS
+
+   O Software utiliza bibliotecas e componentes de terceiros listados no
+   arquivo THIRD-PARTY-NOTICES presente neste repositório. Cada componente
+   de terceiro permanece sujeito à sua respectiva licença original (MIT,
+   Apache 2.0, BSD, ISC, conforme aplicável) e não é abrangido por esta
+   Licença Proprietária. Esta licença aplica-se exclusivamente ao código
+   original desenvolvido por Bernardo Damiani.
+
+5. ISENÇÃO DE GARANTIAS
+
+   O SOFTWARE É FORNECIDO "NO ESTADO EM QUE SE ENCONTRA" ("AS IS"), SEM
+   GARANTIAS DE QUALQUER ESPÉCIE, EXPRESSAS OU IMPLÍCITAS, INCLUINDO,
+   SEM LIMITAÇÃO, GARANTIAS DE COMERCIABILIDADE, ADEQUAÇÃO A UMA
+   FINALIDADE ESPECÍFICA, PRECISÃO, CONFIABILIDADE OU NÃO VIOLAÇÃO DE
+   DIREITOS DE TERCEIROS. O TITULAR NÃO GARANTE QUE O SOFTWARE ATENDERÁ
+   AOS REQUISITOS DO USUÁRIO, QUE FUNCIONARÁ DE FORMA ININTERRUPTA OU
+   LIVRE DE ERROS, NEM QUE DEFEITOS SERÃO CORRIGIDOS.
+
+6. LIMITAÇÃO DE RESPONSABILIDADE
+
+   EM NENHUMA HIPÓTESE O TITULAR SERÁ RESPONSÁVEL POR QUAISQUER DANOS
+   DIRETOS, INDIRETOS, INCIDENTAIS, ESPECIAIS, EXEMPLARES, CONSEQUENCIAIS
+   OU PUNITIVOS, INCLUINDO, SEM LIMITAÇÃO, PERDA DE LUCROS, PERDA DE
+   DADOS, INTERRUPÇÃO DE NEGÓCIOS OU QUALQUER OUTRO PREJUÍZO COMERCIAL
+   OU ECONÔMICO, DECORRENTES DO USO OU DA IMPOSSIBILIDADE DE USO DO
+   SOFTWARE, AINDA QUE O TITULAR TENHA SIDO ADVERTIDO DA POSSIBILIDADE
+   DE TAIS DANOS.
+
+7. CONTATO PARA AUTORIZAÇÃO
+
+   Solicitações de licença, uso autorizado, parcerias ou qualquer outra
+   consulta relacionada ao Software devem ser encaminhadas diretamente ao
+   Titular:
+
+       Bernardo Damiani
+       E-mail: bmdamiani17@gmail.com
+
+8. LEI APLICÁVEL E FORO
+
+   Esta Licença é regida exclusivamente pela legislação brasileira,
+   especialmente a Lei nº 9.610/1998 (Lei de Direitos Autorais) e o
+   Código Civil Brasileiro (Lei nº 10.406/2002). Fica eleito o foro da
+   comarca do domicílio do Titular para dirimir quaisquer controvérsias
+   decorrentes desta Licença ou do uso do Software, com renúncia expressa
+   a qualquer outro, por mais privilegiado que seja.
+
+================================================================================
+
+Para fins de informação sobre bibliotecas de terceiros incorporadas neste
+produto, consulte o arquivo THIRD-PARTY-NOTICES na raiz deste repositório.
