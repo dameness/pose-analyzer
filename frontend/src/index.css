@@ -3,84 +3,88 @@
 
 @variant dark (&:where(.dark, .dark *));
 
-/* ===== Semantic tokens — light ===== */
+/* ===== Semantic tokens — light =====
+   Referenciam a paleta em tokens.css. Valores raw só aparecem quando
+   não há correspondência na paleta (subtles com alpha, warning laranja). */
 :root {
-  --surface:         #ffffff;
-  --subtle:          #f8f8f8;
-  --raised:          #f4f4f4;
+  --surface: var(--ln-bg-level-0); /* #ffffff */
+  --subtle: var(--ln-bg-level-1); /* #f8f8f8 */
+  --raised: var(--ln-bg-level-2); /* #f4f4f4 */
 
-  --fg:              #282a30;
-  --fg-secondary:    #3c4149;
-  --fg-muted:        #6f6e77;
+  --fg: var(--ln-fg-primary); /* #282a2f */
+  --fg-secondary: var(--ln-fg-secondary); /* #3c4149 */
+  --fg-muted: var(--ln-fg-tertiary); /* #6f6e77 */
 
-  --line:            #e9e8ea;
-  --line-strong:     #dcdbdd;
+  --line: var(--ln-border-primary); /* #e9e8ea */
+  --line-strong: var(--ln-border-tertiary); /* #dcdbdd */
 
-  --brand:           #282a30;
-  --brand-fg:        #ffffff;
-  --accent:          #5e6ad2;
-  --accent-subtle:   rgba(94, 106, 210, 0.08);
+  --brand: var(--ln-fg-primary);
+  --brand-fg: var(--ln-color-white);
+  --accent: var(--ln-color-indigo); /* #5e6ad2 */
+  --accent-subtle: rgba(94, 106, 210, 0.08); /* indigo @ 8% — sem token equivalente */
 
-  --success:         #27a644;
-  --success-subtle:  #f0faf2;
-  --error:           #eb5757;
-  --error-subtle:    #fff5f5;
-  --warning:         #d97706;
-  --warning-subtle:  #fffbeb;
+  --success: var(--ln-color-green); /* #27a644 */
+  --success-subtle: #f0faf2; /* sem token equivalente */
+  --error: var(--ln-color-red); /* #eb5757 */
+  --error-subtle: #fff5f5; /* sem token equivalente */
+  --warning: #d97706; /* amber-600 — paleta não tem match */
+  --warning-subtle: #fffbeb; /* sem token equivalente */
 }
 
-/* ===== Semantic tokens — dark ===== */
+/* ===== Semantic tokens — dark =====
+   Vários neutros do dark (#111, #333, #a1a1a1, #666, #e0e0e0) são escolhas
+   próprias do projeto e não existem em tokens.css. Mantidos raw com nota. */
 .dark {
-  --surface:         #000000;
-  --subtle:          #0a0a0a;
-  --raised:          #111111;
+  --surface: var(--ln-color-black); /* #000 — = --vr-background-200 */
+  --subtle: var(--vr-background-100); /* hsl(0,0%,4%) ≈ #0a0a0a */
+  --raised: #111111; /* neutro próprio — sem token */
 
-  --fg:              #ffffff;
-  --fg-secondary:    #a1a1a1;
-  --fg-muted:        #666666;
+  --fg: var(--ln-color-white); /* #fff */
+  --fg-secondary: #a1a1a1; /* neutro próprio */
+  --fg-muted: #666666; /* neutro próprio */
 
-  --line:            #1a1a1a;
-  --line-strong:     #333333;
+  --line: var(--vr-gray-100); /* hsl(0,0%,10%) ≈ #1a1a1a */
+  --line-strong: #333333; /* neutro próprio */
 
-  --brand:           #ffffff;
-  --brand-fg:        #000000;
-  --accent:          #e0e0e0;
-  --accent-subtle:   rgba(255, 255, 255, 0.08);
+  --brand: var(--vr-color-foreground); /* #fff */
+  --brand-fg: var(--vr-color-background); /* #000 */
+  --accent: #e0e0e0; /* neutro próprio */
+  --accent-subtle: rgba(255, 255, 255, 0.08);
 
-  --success:         oklch(64.58% 0.199 147.27);
-  --success-subtle:  rgba(39, 166, 68, 0.10);
-  --error:           oklch(62.56% 0.2277 23.03);
-  --error-subtle:    rgba(235, 87, 87, 0.10);
-  --warning:         #f5a623;
-  --warning-subtle:  rgba(245, 166, 35, 0.10);
+  --success: var(--vr-green-700);
+  --success-subtle: rgba(39, 166, 68, 0.1);
+  --error: var(--vr-red-600);
+  --error-subtle: rgba(235, 87, 87, 0.1);
+  --warning: var(--vr-color-warning); /* #f5a623 */
+  --warning-subtle: rgba(245, 166, 35, 0.1);
 }
 
 /* ===== Tailwind theme bridge ===== */
 /* @theme inline: utilities reference the CSS var at paint time, not a baked value. */
 /* This is what makes light/dark switching work without any dark: prefixes.         */
 @theme inline {
-  --color-surface:         var(--surface);
-  --color-subtle:          var(--subtle);
-  --color-raised:          var(--raised);
+  --color-surface: var(--surface);
+  --color-subtle: var(--subtle);
+  --color-raised: var(--raised);
 
-  --color-fg:              var(--fg);
-  --color-secondary:       var(--fg-secondary);
-  --color-muted:           var(--fg-muted);
+  --color-fg: var(--fg);
+  --color-secondary: var(--fg-secondary);
+  --color-muted: var(--fg-muted);
 
-  --color-line:            var(--line);
-  --color-strong:          var(--line-strong);
+  --color-line: var(--line);
+  --color-strong: var(--line-strong);
 
-  --color-brand:           var(--brand);
-  --color-brand-fg:        var(--brand-fg);
-  --color-accent:          var(--accent);
-  --color-accent-subtle:   var(--accent-subtle);
+  --color-brand: var(--brand);
+  --color-brand-fg: var(--brand-fg);
+  --color-accent: var(--accent);
+  --color-accent-subtle: var(--accent-subtle);
 
-  --color-success:         var(--success);
-  --color-success-subtle:  var(--success-subtle);
-  --color-error:           var(--error);
-  --color-error-subtle:    var(--error-subtle);
-  --color-warning:         var(--warning);
-  --color-warning-subtle:  var(--warning-subtle);
+  --color-success: var(--success);
+  --color-success-subtle: var(--success-subtle);
+  --color-error: var(--error);
+  --color-error-subtle: var(--error-subtle);
+  --color-warning: var(--warning);
+  --color-warning-subtle: var(--warning-subtle);
 
   --font-sans: 'Inter Variable', 'Inter', system-ui, sans-serif;
 }
