@@ -2,6 +2,7 @@ import { Module } from '@nestjs/common';
 import { ConfigModule } from '@nestjs/config';
 import { PrismaModule } from './prisma/prisma.module';
 import { envValidationSchema } from './config/env.validation';
+import { AuthModule } from './auth/auth.module';
 
 @Module({
   imports: [
@@ -11,7 +12,8 @@ import { envValidationSchema } from './config/env.validation';
       validationOptions: { abortEarly: false },
     }),
     PrismaModule,
-    // AuthModule, UsersModule, ExercisesModule, ExecutionsModule — added in later tasks
+    AuthModule,
+    // UsersModule, ExercisesModule, ExecutionsModule — added in later tasks
   ],
 })
 export class AppModule {}
