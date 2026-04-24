@@ -1,0 +1,41 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id         Int                  @id @default(autoincrement())
+  email      String               @unique
+  password   String
+  name       String
+  createdAt  DateTime             @default(now())
+  executions ExerciseExecution[]
+}
+
+model Exercise {
+  id          Int                  @id @default(autoincrement())
+  slug        String               @unique
+  name        String
+  description String
+  createdAt   DateTime             @default(now())
+  executions  ExerciseExecution[]
+}
+
+model ExerciseExecution {
+  id          Int      @id @default(autoincrement())
+  userId      Int
+  exerciseId  Int
+  reps        Int
+  durationSec Int
+  result      String
+  score       Float
+  executedAt  DateTime
+  createdAt   DateTime @default(now())
+
+  user     User     @relation(fields: [userId], references: [id])
+  exercise Exercise @relation(fields: [exerciseId], references: [id])
+}

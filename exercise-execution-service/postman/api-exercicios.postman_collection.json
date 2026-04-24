@@ -1,0 +1,146 @@
+{
+  "info": {
+    "name": "Exercise Execution Service",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    { "key": "baseUrl", "value": "http://localhost:3000" },
+    { "key": "token", "value": "" }
+  ],
+  "item": [
+    {
+      "name": "Auth",
+      "item": [
+        {
+          "name": "Register",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "url": { "raw": "{{baseUrl}}/auth/register", "host": ["{{baseUrl}}"], "path": ["auth", "register"] },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"novo@example.com\",\n  \"password\": \"senha123\",\n  \"name\": \"Novo Usuário\"\n}"
+            }
+          }
+        },
+        {
+          "name": "Login",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "const json = pm.response.json();",
+                  "if (json.token) {",
+                  "  pm.collectionVariables.set('token', json.token);",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "url": { "raw": "{{baseUrl}}/auth/login", "host": ["{{baseUrl}}"], "path": ["auth", "login"] },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"alice@example.com\",\n  \"password\": \"senha123\"\n}"
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Users",
+      "item": [
+        {
+          "name": "Me",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }],
+            "url": { "raw": "{{baseUrl}}/me", "host": ["{{baseUrl}}"], "path": ["me"] }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Exercises",
+      "item": [
+        {
+          "name": "List Exercises",
+          "request": {
+            "method": "GET",
+            "url": { "raw": "{{baseUrl}}/exercises", "host": ["{{baseUrl}}"], "path": ["exercises"] }
+          }
+        },
+        {
+          "name": "Get Exercise by ID",
+          "request": {
+            "method": "GET",
+            "url": { "raw": "{{baseUrl}}/exercises/1", "host": ["{{baseUrl}}"], "path": ["exercises", "1"] }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Executions",
+      "item": [
+        {
+          "name": "List Executions",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }],
+            "url": { "raw": "{{baseUrl}}/executions", "host": ["{{baseUrl}}"], "path": ["executions"] }
+          }
+        },
+        {
+          "name": "Get Execution by ID",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }],
+            "url": { "raw": "{{baseUrl}}/executions/1", "host": ["{{baseUrl}}"], "path": ["executions", "1"] }
+          }
+        },
+        {
+          "name": "Create Execution",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{token}}" },
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "url": { "raw": "{{baseUrl}}/executions", "host": ["{{baseUrl}}"], "path": ["executions"] },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"exerciseId\": 1,\n  \"reps\": 15,\n  \"durationSec\": 45,\n  \"result\": \"correct\",\n  \"score\": 0.92,\n  \"executedAt\": \"2026-04-21T12:00:00Z\"\n}"
+            }
+          }
+        },
+        {
+          "name": "Update Execution",
+          "request": {
+            "method": "PUT",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{token}}" },
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "url": { "raw": "{{baseUrl}}/executions/1", "host": ["{{baseUrl}}"], "path": ["executions", "1"] },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"reps\": 20,\n  \"score\": 0.95\n}"
+            }
+          }
+        },
+        {
+          "name": "Delete Execution",
+          "request": {
+            "method": "DELETE",
+            "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }],
+            "url": { "raw": "{{baseUrl}}/executions/1", "host": ["{{baseUrl}}"], "path": ["executions", "1"] }
+          }
+        }
+      ]
+    }
+  ]
+}
