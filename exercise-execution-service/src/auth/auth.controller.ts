@@ -12,9 +12,10 @@ export class AuthController {
 
   @Post('register')
   @ApiOperation({ summary: 'Cria conta de usuário' })
-  async register(@Body() dto: RegisterDto, @Res() res: Response) {
+  async register(@Body() dto: RegisterDto, @Res({ passthrough: true }) res: Response) {
     const user = await this.authService.register(dto);
-    return res.status(HttpStatus.CREATED).location('/me').json({ user });
+    res.status(HttpStatus.CREATED).location('/me');
+    return { user };
   }
 
   @Post('login')
