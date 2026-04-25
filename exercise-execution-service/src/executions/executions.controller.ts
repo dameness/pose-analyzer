@@ -29,10 +29,14 @@ import { JwtAuthGuard } from '../auth/jwt-auth.guard';
 import { ExecutionsService } from './executions.service';
 import { CreateExecutionDto } from './dto/create-execution.dto';
 import { UpdateExecutionDto } from './dto/update-execution.dto';
+import { successExamples, errorExamples } from '../common/swagger-examples';
 
 @ApiTags('Executions')
 @ApiBearerAuth()
-@ApiUnauthorizedResponse({ description: 'Token inválido ou ausente' })
+@ApiUnauthorizedResponse({
+  description: 'Token inválido ou ausente',
+  schema: { example: errorExamples.unauthorizedToken },
+})
 @Controller('executions')
 @UseGuards(JwtAuthGuard)
 export class ExecutionsController {
@@ -40,15 +44,24 @@ export class ExecutionsController {
 
   @Get()
   @ApiOperation({ summary: 'Lista execuções do usuário' })
-  @ApiOkResponse({ description: 'Lista de execuções do usuário autenticado' })
+  @ApiOkResponse({
+    description: 'Lista de execuções do usuário autenticado',
+    schema: { example: successExamples.executionsList },
+  })
   async list(@Request() req: { user: { id: number } }) {
     return { executions: await this.executionsService.list(req.user.id) };
   }
 
   @Get(':id')
   @ApiOperation({ summary: 'Detalha uma execução' })
-  @ApiOkResponse({ description: 'Detalhe da execução' })
-  @ApiNotFoundResponse({ description: 'Execução não encontrada ou de outro usuário' })
+  @ApiOkResponse({
+    description: 'Detalhe da execução',
+    schema: { example: successExamples.executionDetail },
+  })
+  @ApiNotFoundResponse({
+    description: 'Execução não encontrada ou de outro usuário',
+    schema: { example: errorExamples.notFoundExecution },
+  })
   async get(
     @Param('id', ParseIntPipe) id: number,
     @Request() req: { user: { id: number } },
@@ -58,9 +71,18 @@ export class ExecutionsController {
 
   @Post()
   @ApiOperation({ summary: 'Registra execução de exercício' })
-  @ApiCreatedResponse({ description: 'Execução criada; header Location aponta para o recurso' })
-  @ApiNotFoundResponse({ description: 'Exercício referenciado não existe' })
-  @ApiBadRequestResponse({ description: 'Dados de entrada inválidos' })
+  @ApiCreatedResponse({
+    description: 'Execução criada; header Location aponta para o recurso',
+    schema: { example: successExamples.executionCreated },
+  })
+  @ApiNotFoundResponse({
+    description: 'Exercício referenciado não existe',
+    schema: { example: errorExamples.notFoundExercise },
+  })
+  @ApiBadRequestResponse({
+    description: 'Dados de entrada inválidos',
+    schema: { example: errorExamples.badRequest },
+  })
   async create(
     @Body() dto: CreateExecutionDto,
     @Request() req: { user: { id: number } },
@@ -73,9 +95,18 @@ export class ExecutionsController {
 
   @Put(':id')
   @ApiOperation({ summary: 'Atualiza execução' })
-  @ApiOkResponse({ description: 'Execução atualizada' })
-  @ApiNotFoundResponse({ description: 'Execução não encontrada ou de outro usuário' })
-  @ApiBadRequestResponse({ description: 'Dados de entrada inválidos' })
+  @ApiOkResponse({
+    description: 'Execução atualizada',
+    schema: { example: successExamples.executionUpdated },
+  })
+  @ApiNotFoundResponse({
+    description: 'Execução não encontrada ou de outro usuário',
+    schema: { example: errorExamples.notFoundExecution },
+  })
+  @ApiBadRequestResponse({
+    description: 'Dados de entrada inválidos',
+    schema: { example: errorExamples.badRequest },
+  })
   async update(
     @Param('id', ParseIntPipe) id: number,
     @Body() dto: UpdateExecutionDto,
@@ -90,7 +121,10 @@ export class ExecutionsController {
   @HttpCode(HttpStatus.NO_CONTENT)
   @ApiOperation({ summary: 'Remove execução' })
   @ApiNoContentResponse({ description: 'Execução removida' })
-  @ApiNotFoundResponse({ description: 'Execução não encontrada ou de outro usuário' })
+  @ApiNotFoundResponse({
+    description: 'Execução não encontrada ou de outro usuário',
+    schema: { example: errorExamples.notFoundExecution },
+  })
   async remove(
     @Param('id', ParseIntPipe) id: number,
     @Request() req: { user: { id: number } },
