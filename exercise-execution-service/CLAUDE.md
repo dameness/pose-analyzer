@@ -6,7 +6,7 @@ Serviço NestJS standalone responsável por autenticação de usuários, catálo
 
 ## Stack
 
-- **NestJS 10** — framework HTTP
+- **NestJS 11** — framework HTTP
 - **Prisma 7 + SQLite** (libsql wasm adapter) — banco de dados
 - **@nestjs/jwt + passport-jwt** — autenticação JWT
 - **@nestjs/config + Joi** — configuração e validação de env vars

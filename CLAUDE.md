@@ -71,7 +71,7 @@ pose-analyzer/
       schema.prisma          # User, Exercise, ExerciseExecution
       seed.ts                # upsert de exercícios e usuários de dev
       resolver-url-banco.ts  # utilitário: converte path relativo → absoluto para libsql
-    test/                    # E2E (⚠️ suite completa pendente — ver CLAUDE.md do serviço)
+    test/                    # E2E — auth, /me, /exercises, /executions CRUD
     CLAUDE.md
 
   docs/
