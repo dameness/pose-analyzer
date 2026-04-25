@@ -63,7 +63,7 @@ exercise-execution-service/
 │   ├── resolver-url-banco.ts           # utilitário: converte file:./ para file:// absoluto
 │   └── migrations/
 ├── test/
-│   ├── app.e2e-spec.ts                 # ⚠️ ainda é o scaffold NestJS — ver "Pendente"
+│   ├── app.e2e-spec.ts                 # suite E2E (auth, /me, /exercises, /executions CRUD)
 │   └── jest-e2e.json
 ├── .env.example
 ├── nest-cli.json
@@ -142,7 +142,7 @@ npm run start:dev            # http://localhost:3000
 
 ```bash
 npm test                     # unitários (20 testes, 5 suites)
-npm run test:e2e             # E2E (⚠️ ainda é o scaffold — ver "Pendente")
+npm run test:e2e             # E2E (15 testes contra o SQLite real — requer seed)
 ```
 
 ---
@@ -157,9 +157,6 @@ npm run test:e2e             # E2E (⚠️ ainda é o scaffold — ver "Pendente
 
 ---
 
-## Pendente
+## Histórico
 
-O plano de implementação está em `docs/superpowers/plans/2026-04-24-exercise-execution-service-nest.md`.
-
-- **Task 10 — E2E tests**: `test/app.e2e-spec.ts` contém apenas o scaffold NestJS. Precisa ser substituído pela suite completa do plano (register, login, /me, /exercises, /executions CRUD). Ver Steps 10.1–10.4 do plano.
-- **Task 11 — Final verification**: rodar todos os testes unitários + E2E + smoke test manual, commit final.
+O plano de migração Express → NestJS está em `docs/superpowers/plans/2026-04-24-exercise-execution-service-nest.md` (concluído).
