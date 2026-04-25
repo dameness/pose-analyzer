@@ -47,13 +47,11 @@ export class ExecutionsController {
   async create(
     @Body() dto: CreateExecutionDto,
     @Request() req: { user: { id: number } },
-    @Res() res: Response,
+    @Res({ passthrough: true }) res: Response,
   ) {
     const execution = await this.executionsService.create(req.user.id, dto);
-    return res
-      .status(HttpStatus.CREATED)
-      .location(`/executions/${execution.id}`)
-      .json({ execution });
+    res.status(HttpStatus.CREATED).location(`/executions/${execution.id}`);
+    return { execution };
   }
 
   @Put(':id')
