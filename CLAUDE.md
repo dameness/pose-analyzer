@@ -8,7 +8,19 @@ visual indicando quais articulações estão corretas ou com erros posturais.
 
 ---
 
-## Estrutura do monolito
+## Serviços
+
+O monorepo tem três serviços independentes. Ver o `CLAUDE.md` de cada um para instruções detalhadas.
+
+| Serviço | Tecnologia | Porta | CLAUDE.md |
+|---------|------------|-------|-----------|
+| backend | FastAPI (Python) | 8000 | `backend/CLAUDE.md` |
+| frontend | React + Vite (TypeScript) | — (build estático servido pelo backend) | `frontend/CLAUDE.md` |
+| exercise-execution-service | NestJS (TypeScript) | 3000 | `exercise-execution-service/CLAUDE.md` |
+
+---
+
+## Estrutura do repositório
 
 ```
 pose-analyzer/
@@ -27,7 +39,7 @@ pose-analyzer/
     models/
       __init__.py
       schemas.py             # Pydantic models para request/response da API
-    CLAUDE.md                # instruções específicas do back-end
+    CLAUDE.md
     requirements.txt
 
   frontend/
@@ -43,7 +55,28 @@ pose-analyzer/
     index.html
     package.json
     vite.config.ts
-    CLAUDE.md                # instruções específicas do front-end
+    CLAUDE.md
+
+  exercise-execution-service/  # NestJS — auth, exercícios, execuções (porta 3000)
+    src/
+      main.ts
+      app.module.ts
+      auth/                  # POST /auth/register, POST /auth/login
+      users/                 # GET /me
+      exercises/             # GET /exercises[/:id]
+      executions/            # CRUD /executions[/:id]
+      prisma/                # PrismaService com adapter libsql
+      config/                # validação Joi de env vars
+    prisma/
+      schema.prisma          # User, Exercise, ExerciseExecution
+      seed.ts                # upsert de exercícios e usuários de dev
+      resolver-url-banco.ts  # utilitário: converte path relativo → absoluto para libsql
+    test/                    # E2E (⚠️ suite completa pendente — ver CLAUDE.md do serviço)
+    CLAUDE.md
+
+  docs/
+    superpowers/plans/
+      2026-04-24-exercise-execution-service-nest.md  # plano de migração Express → NestJS
 
   CLAUDE.md                  # este arquivo — visão geral do projeto
   README.md
@@ -153,14 +186,24 @@ foi removido (reinício do servidor).
 
 ## Como rodar
 
-Ver `backend/CLAUDE.md` e `frontend/CLAUDE.md` para instruções de setup de cada camada.
+Ver o `CLAUDE.md` de cada serviço para instruções de setup completas.
 
-Build de produção (front servido pelo FastAPI):
-
+**Backend FastAPI + Frontend (análise de vídeo):**
 ```bash
 cd frontend && yarn build
 cd ../backend && uvicorn main:app --port 8000
-# tudo disponível em http://localhost:8000
+# disponível em http://localhost:8000
+```
+
+**exercise-execution-service (auth + execuções):**
+```bash
+cd exercise-execution-service
+npm install
+npx prisma migrate dev
+npx tsx prisma/seed.ts      # popula exercícios e usuários de dev
+npm run start:dev
+# disponível em http://localhost:3000
+# Swagger em http://localhost:3000/api-docs
 ```
 
 ---
