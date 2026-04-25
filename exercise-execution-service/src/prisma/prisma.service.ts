@@ -1,20 +1,7 @@
-import * as path from 'node:path';
 import { Injectable, OnModuleInit, OnModuleDestroy } from '@nestjs/common';
 import { PrismaClient } from '@prisma/client';
 import { PrismaLibSql } from '@prisma/adapter-libsql';
-
-/**
- * Resolve a URL de banco de dados para o formato absoluto exigido pelo @libsql/client.
- * O libsql não aceita caminhos relativos como "file:./dev.db".
- */
-function resolverUrlBanco(databaseUrl: string): string {
-  if (databaseUrl.startsWith('file:./') || databaseUrl.startsWith('file:../')) {
-    const caminho = databaseUrl.replace(/^file:/, '');
-    const caminhoAbsoluto = path.resolve(process.cwd(), caminho);
-    return `file://${caminhoAbsoluto}`;
-  }
-  return databaseUrl;
-}
+import { resolverUrlBanco } from '../../prisma/resolver-url-banco';
 
 @Injectable()
 export class PrismaService

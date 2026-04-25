@@ -1,22 +1,13 @@
-import * as path from 'node:path';
 import { PrismaClient } from '@prisma/client';
 import { PrismaLibSql } from '@prisma/adapter-libsql';
 import * as bcrypt from 'bcrypt';
-
-function resolverUrlBanco(databaseUrl: string): string {
-  if (databaseUrl.startsWith('file:./') || databaseUrl.startsWith('file:../')) {
-    const caminho = databaseUrl.replace(/^file:/, '');
-    const caminhoAbsoluto = path.resolve(process.cwd(), caminho);
-    return `file://${caminhoAbsoluto}`;
-  }
-  return databaseUrl;
-}
+import { resolverUrlBanco } from './resolver-url-banco';
 
 const urlBanco = resolverUrlBanco(
   process.env.DATABASE_URL ?? 'file:./prisma/dev.db',
 );
 const adapter = new PrismaLibSql({ url: urlBanco });
-const prisma = new PrismaClient({ adapter } as any);
+const prisma = new PrismaClient({ adapter });
 
 async function main() {
   await prisma.exercise.upsert({
