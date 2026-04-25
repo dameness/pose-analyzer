@@ -1,0 +1,231 @@
+{
+  "info": {
+    "name": "exercise-execution-service",
+    "description": "Coleção Postman para o serviço NestJS de execução de exercícios.\n\n## Variáveis de ambiente\n\n- `baseUrl` — ex: `http://localhost:3000`\n- `token` — preenchido automaticamente após `Auth > Login`\n- `executionId` — preenchido automaticamente após `Executions > Create`\n- `exerciseId` — id de um exercício existente (default `1` = squat)\n\n## Fluxo recomendado\n\n1. Rode `Auth > Register` (ou pule se já tiver usuário no seed).\n2. Rode `Auth > Login` — o teste salva o token em `{{token}}`.\n3. Os endpoints protegidos usam Bearer `{{token}}` automaticamente via auth herdada da coleção.\n4. Rode `Executions > Create` — o teste salva o id em `{{executionId}}`.\n5. Use `{{executionId}}` em Get/Update/Delete.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "auth": {
+    "type": "bearer",
+    "bearer": [
+      {
+        "key": "token",
+        "value": "{{token}}",
+        "type": "string"
+      }
+    ]
+  },
+  "item": [
+    {
+      "name": "Auth",
+      "item": [
+        {
+          "name": "Register",
+          "request": {
+            "auth": { "type": "noauth" },
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/auth/register",
+              "host": ["{{baseUrl}}"],
+              "path": ["auth", "register"]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"alice@example.com\",\n  \"password\": \"senha123\",\n  \"name\": \"Alice\"\n}"
+            },
+            "description": "Cria conta. 201 + Location: /me em sucesso. 409 se email duplicado."
+          }
+        },
+        {
+          "name": "Login",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "if (pm.response.code === 200) {",
+                  "  const body = pm.response.json();",
+                  "  if (body.token) {",
+                  "    pm.environment.set('token', body.token);",
+                  "    console.log('Token salvo em {{token}}');",
+                  "  }",
+                  "}"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "auth": { "type": "noauth" },
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/auth/login",
+              "host": ["{{baseUrl}}"],
+              "path": ["auth", "login"]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"alice@example.com\",\n  \"password\": \"senha123\"\n}"
+            },
+            "description": "Autentica e retorna `{ token, user }`. O token é salvo em `{{token}}` automaticamente."
+          }
+        }
+      ]
+    },
+    {
+      "name": "Users",
+      "item": [
+        {
+          "name": "Get me",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/me",
+              "host": ["{{baseUrl}}"],
+              "path": ["me"]
+            },
+            "description": "Dados do usuário autenticado. Requer Bearer token."
+          }
+        }
+      ]
+    },
+    {
+      "name": "Exercises",
+      "item": [
+        {
+          "name": "List",
+          "request": {
+            "auth": { "type": "noauth" },
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/exercises",
+              "host": ["{{baseUrl}}"],
+              "path": ["exercises"]
+            },
+            "description": "Lista o catálogo de exercícios. Endpoint público."
+          }
+        },
+        {
+          "name": "Detail",
+          "request": {
+            "auth": { "type": "noauth" },
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/exercises/{{exerciseId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["exercises", "{{exerciseId}}"]
+            },
+            "description": "Detalha um exercício. 404 se não encontrado."
+          }
+        }
+      ]
+    },
+    {
+      "name": "Executions",
+      "item": [
+        {
+          "name": "List",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/executions",
+              "host": ["{{baseUrl}}"],
+              "path": ["executions"]
+            },
+            "description": "Lista execuções do usuário autenticado."
+          }
+        },
+        {
+          "name": "Get",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/executions/{{executionId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["executions", "{{executionId}}"]
+            },
+            "description": "Detalha uma execução. 404 se não existir ou for de outro usuário."
+          }
+        },
+        {
+          "name": "Create",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "if (pm.response.code === 201) {",
+                  "  const body = pm.response.json();",
+                  "  if (body.execution && body.execution.id) {",
+                  "    pm.environment.set('executionId', body.execution.id);",
+                  "    console.log('executionId salvo em {{executionId}}');",
+                  "  }",
+                  "}"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/executions",
+              "host": ["{{baseUrl}}"],
+              "path": ["executions"]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"exerciseId\": {{exerciseId}},\n  \"reps\": 10,\n  \"durationSec\": 30,\n  \"result\": \"correct\",\n  \"score\": 0.9,\n  \"executedAt\": \"2026-04-25T12:00:00.000Z\"\n}"
+            },
+            "description": "Registra execução de exercício. 201 + Location header. O id é salvo em `{{executionId}}` automaticamente."
+          }
+        },
+        {
+          "name": "Update",
+          "request": {
+            "method": "PUT",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/executions/{{executionId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["executions", "{{executionId}}"]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"reps\": 15\n}"
+            },
+            "description": "Atualiza campos da execução (todos opcionais; exerciseId não é editável)."
+          }
+        },
+        {
+          "name": "Delete",
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/executions/{{executionId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["executions", "{{executionId}}"]
+            },
+            "description": "Remove execução. 204 em sucesso, 404 se não encontrada."
+          }
+        }
+      ]
+    }
+  ]
+}

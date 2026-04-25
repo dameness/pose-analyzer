@@ -65,6 +65,9 @@ exercise-execution-service/
 ├── test/
 │   ├── app.e2e-spec.ts                 # suite E2E (auth, /me, /exercises, /executions CRUD)
 │   └── jest-e2e.json
+├── postman/
+│   ├── exercise-execution-service.postman_collection.json   # coleção Postman v2.1
+│   └── exercise-execution-service.postman_environment.json  # ambiente local (baseUrl, token, etc.)
 ├── .env.example
 ├── nest-cli.json
 ├── package.json
@@ -109,6 +112,32 @@ Ownership: GET/PUT/DELETE lançam `404` (não `403`) para execuções inexistent
 
 ---
 
+## Documentação interativa da API
+
+### Swagger / OpenAPI
+
+Disponível em `http://localhost:3000/api-docs` quando o servidor estiver rodando. Gerado automaticamente a partir dos decorators `@ApiTags`, `@ApiOperation`, `@ApiResponse`, `@ApiBearerAuth` nos controllers e `@ApiProperty` nos DTOs.
+
+Para autenticar no Swagger UI:
+1. Faça `POST /auth/login` na própria UI; copie o `token` da resposta.
+2. Clique em **Authorize** (ícone de cadeado), cole o token e confirme.
+3. Endpoints protegidos passam a enviar o header `Authorization: Bearer ...` automaticamente.
+
+### Postman collection
+
+Coleção e ambiente versionados em `postman/`:
+
+- `exercise-execution-service.postman_collection.json` — todos os endpoints organizados por tag (Auth, Users, Exercises, Executions).
+- `exercise-execution-service.postman_environment.json` — variáveis `baseUrl`, `token`, `executionId`, `exerciseId`.
+
+Ambos seguem o schema **Postman Collection v2.1**. Importe os dois no Postman, selecione o ambiente `(local)` e:
+
+1. Rode `Auth > Login` — um test script salva `token` no ambiente.
+2. Rode `Executions > Create` — outro test script salva `executionId`.
+3. Endpoints autenticados herdam Bearer `{{token}}` da coleção; os públicos sobrescrevem com `noauth`.
+
+---
+
 ## Variáveis de ambiente
 
 Copie `.env.example` para `.env`:
@@ -134,6 +163,7 @@ npx prisma generate          # gera o Prisma Client
 npx tsx prisma/seed.ts       # popula exercícios + usuários de dev
 npm run start:dev            # http://localhost:3000
 # Swagger em http://localhost:3000/api-docs
+# Postman: importe arquivos de postman/ e selecione o ambiente "(local)"
 ```
 
 ---

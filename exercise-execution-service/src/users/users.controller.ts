@@ -1,17 +1,25 @@
 import { Controller, Get, UseGuards, Request } from '@nestjs/common';
-import { ApiBearerAuth, ApiOperation, ApiTags } from '@nestjs/swagger';
+import {
+  ApiBearerAuth,
+  ApiOperation,
+  ApiTags,
+  ApiOkResponse,
+  ApiUnauthorizedResponse,
+} from '@nestjs/swagger';
 import { JwtAuthGuard } from '../auth/jwt-auth.guard';
 import { UsersService } from './users.service';
 
 @ApiTags('Users')
+@ApiBearerAuth()
+@ApiUnauthorizedResponse({ description: 'Token inválido ou ausente' })
 @Controller()
 export class UsersController {
   constructor(private readonly usersService: UsersService) {}
 
   @Get('me')
   @UseGuards(JwtAuthGuard)
-  @ApiBearerAuth()
   @ApiOperation({ summary: 'Dados do usuário autenticado' })
+  @ApiOkResponse({ description: 'Dados do usuário autenticado' })
   async me(@Request() req: { user: { id: number } }) {
     return { user: await this.usersService.getMe(req.user.id) };
   }

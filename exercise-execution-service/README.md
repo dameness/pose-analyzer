@@ -15,6 +15,11 @@ npm run start:dev          # http://localhost:3000
                            # Swagger: http://localhost:3000/api-docs
 ```
 
+## Documentação da API
+
+- **Swagger UI** em `/api-docs` (gerado dos decorators NestJS).
+- **Postman** — importe `postman/exercise-execution-service.postman_collection.json` e o ambiente `postman/exercise-execution-service.postman_environment.json`. O test script de `Auth > Login` salva o token automaticamente.
+
 ## Testes
 
 ```bash

@@ -72,6 +72,7 @@ pose-analyzer/
       seed.ts                # upsert de exercícios e usuários de dev
       resolver-url-banco.ts  # utilitário: converte path relativo → absoluto para libsql
     test/                    # E2E — auth, /me, /exercises, /executions CRUD
+    postman/                 # coleção Postman v2.1 + ambiente local
     CLAUDE.md
 
   docs/
@@ -204,6 +205,7 @@ npx tsx prisma/seed.ts      # popula exercícios e usuários de dev
 npm run start:dev
 # disponível em http://localhost:3000
 # Swagger em http://localhost:3000/api-docs
+# Postman: importe os arquivos em exercise-execution-service/postman/
 ```
 
 ---
