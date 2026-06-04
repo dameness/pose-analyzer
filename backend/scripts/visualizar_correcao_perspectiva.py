@@ -36,18 +36,29 @@ _POSE_CONNECTIONS = mp.solutions.pose.POSE_CONNECTIONS
 _FACE_LANDMARKS = frozenset(range(11))
 
 # Cores em BGR (OpenCV)
-COR_ESQUELETO = (200, 200, 200)  # cinza claro
+COR_ESQUELETO = (200, 200, 200)  # cinza claro — esqueleto sobre o frame original
+COR_VERMELHO  = (0, 0, 255)      # vermelho — esqueleto corrigido sobre fundo branco
 COR_PIVO      = (0, 215, 255)    # dourado — destaca o quadril-âncora
 COR_TITULO    = (255, 255, 255)  # branco
+COR_FUNDO     = (255, 255, 255)  # branco — fundo do painel corrigido
+COR_DESLOC    = (0, 255, 255)    # amarelo — vetores de deslocamento (modo sobreposto)
+
+# Deslocamento mínimo (em px) para desenhar um vetor no modo sobreposto
+_DESLOC_MINIMO_PX = 3
 
 _RAIO_LANDMARK = 4
 _RAIO_PIVO     = 9
 _ESPESSURA     = 2
 _ALTURA_BARRA  = 40
 
+# Seleção automática de frame: entre os frames com θ "elevado" (>= este fator
+# do θ máximo), escolhe o mais próximo do meio da execução — evita frames de
+# transição nas pontas e dá um quadro representativo do movimento.
+_FATOR_THETA_ELEVADO = 0.95
 
-def _desenhar_esqueleto(frame, keypoints, largura, altura, idx_pivo):
-    """Desenha o esqueleto neutro (in-place) e destaca o quadril-pivô."""
+
+def _desenhar_esqueleto(frame, keypoints, largura, altura, idx_pivo, cor=COR_ESQUELETO):
+    """Desenha o esqueleto (in-place) na cor dada e destaca o quadril-pivô."""
     for a, b in _POSE_CONNECTIONS:
         if a in _FACE_LANDMARKS or b in _FACE_LANDMARKS:
             continue
@@ -57,19 +68,39 @@ def _desenhar_esqueleto(frame, keypoints, largura, altura, idx_pivo):
             continue
         pt_a = (int(kp_a["x"] * largura), int(kp_a["y"] * altura))
         pt_b = (int(kp_b["x"] * largura), int(kp_b["y"] * altura))
-        cv2.line(frame, pt_a, pt_b, COR_ESQUELETO, _ESPESSURA)
+        cv2.line(frame, pt_a, pt_b, cor, _ESPESSURA)
 
     for idx, kp in enumerate(keypoints):
         if kp is None or idx in _FACE_LANDMARKS:
             continue
         centro = (int(kp["x"] * largura), int(kp["y"] * altura))
-        cv2.circle(frame, centro, _RAIO_LANDMARK, COR_ESQUELETO, -1)
+        cv2.circle(frame, centro, _RAIO_LANDMARK, cor, -1)
 
     kp_pivo = keypoints[idx_pivo]
     if kp_pivo is not None:
         cp = (int(kp_pivo["x"] * largura), int(kp_pivo["y"] * altura))
         cv2.circle(frame, cp, _RAIO_PIVO, COR_PIVO, -1)
         cv2.circle(frame, cp, _RAIO_PIVO + 4, COR_PIVO, 2)
+
+
+def _desenhar_deslocamentos(frame, kp_orig, kp_corr, largura, altura):
+    """
+    Desenha (in-place) um vetor amarelo de cada landmark original até sua
+    posição corrigida — torna visível o quanto a correção moveu cada ponto.
+    Ignora face e deslocamentos desprezíveis (ex: o quadril-pivô, que não move).
+    """
+    for idx in range(len(kp_orig)):
+        if idx in _FACE_LANDMARKS:
+            continue
+        a = kp_orig[idx]
+        b = kp_corr[idx]
+        if a is None or b is None:
+            continue
+        pa = (int(a["x"] * largura), int(a["y"] * altura))
+        pb = (int(b["x"] * largura), int(b["y"] * altura))
+        if abs(pa[0] - pb[0]) + abs(pa[1] - pb[1]) < _DESLOC_MINIMO_PX:
+            continue
+        cv2.line(frame, pa, pb, COR_DESLOC, _ESPESSURA, cv2.LINE_AA)
 
 
 def _adicionar_titulo(frame, texto):
@@ -88,6 +119,8 @@ def _extrair_keypoints_video(video_path):
     cap = cv2.VideoCapture(video_path)
     if not cap.isOpened():
         return None
+    # Aplica a orientação do metadata (ex: vídeos de celular em retrato)
+    cap.set(cv2.CAP_PROP_ORIENTATION_AUTO, 1)
     pose = inicializar_pose(static_image_mode=False)
     keypoints_por_frame = []
     try:
@@ -106,6 +139,8 @@ def _extrair_keypoints_video(video_path):
 def _ler_frame_bgr(video_path, idx):
     """Reabre o vídeo e lê sequencialmente até o frame idx (robusto a seek de webm)."""
     cap = cv2.VideoCapture(video_path)
+    # Mesma orientação aplicada na extração de keypoints — mantém consistência
+    cap.set(cv2.CAP_PROP_ORIENTATION_AUTO, 1)
     frame_bgr = None
     i = 0
     while True:
@@ -133,6 +168,20 @@ def main():
         "--frame", type=int, default=None,
         help="índice do frame (default: frame de maior θ)",
     )
+    parser.add_argument(
+        "--lado", choices=["left", "right"], default=None,
+        help=(
+            "força o lado e pula a detecção de frontal — útil só para visualizar "
+            "vídeos quase-frontais. Padrão: detecta automaticamente."
+        ),
+    )
+    parser.add_argument(
+        "--sobreposto", action="store_true",
+        help=(
+            "desenha original (cinza) e corrigido (vermelho) no MESMO frame, com "
+            "vetores de deslocamento. Padrão: dois painéis lado a lado."
+        ),
+    )
     args = parser.parse_args()
 
     keypoints_por_frame = _extrair_keypoints_video(args.video_path)
@@ -143,11 +192,14 @@ def main():
         print("Erro: nenhuma pose detectada no vídeo.", file=sys.stderr)
         return 1
 
-    try:
-        side = detectar_lado(keypoints_por_frame)
-    except ValueError as e:
-        print(f"Erro ao detectar o lado da gravação: {e}", file=sys.stderr)
-        return 1
+    if args.lado is not None:
+        side = args.lado
+    else:
+        try:
+            side = detectar_lado(keypoints_por_frame)
+        except ValueError as e:
+            print(f"Erro ao detectar o lado da gravação: {e}", file=sys.stderr)
+            return 1
 
     corrigidos = corrigir_perspectiva(keypoints_por_frame, side)
     thetas = estimar_thetas_por_frame(keypoints_por_frame, side)
@@ -169,7 +221,13 @@ def main():
                 file=sys.stderr,
             )
             return 1
-        idx = max(indices_validos, key=lambda i: thetas[i])
+        # Entre os frames com θ elevado, escolhe o mais próximo do meio da execução
+        theta_max = max(thetas[i] for i in indices_validos)
+        candidatos = [
+            i for i in indices_validos if thetas[i] >= _FATOR_THETA_ELEVADO * theta_max
+        ]
+        meio = indices_validos[len(indices_validos) // 2]
+        idx = min(candidatos, key=lambda i: abs(i - meio))
 
     theta_frame = thetas[idx]
     frame_bgr = _ler_frame_bgr(args.video_path, idx)
@@ -180,15 +238,39 @@ def main():
     altura, largura = frame_bgr.shape[:2]
     idx_pivo = QUADRIL_ESQ if side == "left" else QUADRIL_DIR
 
-    painel_orig = frame_bgr.copy()
-    painel_corr = frame_bgr.copy()
-    _desenhar_esqueleto(painel_orig, keypoints_por_frame[idx], largura, altura, idx_pivo)
-    _desenhar_esqueleto(painel_corr, corrigidos[idx], largura, altura, idx_pivo)
+    if args.sobreposto:
+        # Modo sobreposto: original (cinza) + corrigido (vermelho) no mesmo frame,
+        # com vetores amarelos mostrando o deslocamento de cada ponto.
+        painel = frame_bgr.copy()
+        _desenhar_esqueleto(painel, keypoints_por_frame[idx], largura, altura, idx_pivo)
+        _desenhar_deslocamentos(
+            painel, keypoints_por_frame[idx], corrigidos[idx], largura, altura
+        )
+        _desenhar_esqueleto(
+            painel, corrigidos[idx], largura, altura, idx_pivo, cor=COR_VERMELHO
+        )
+        composicao = _adicionar_titulo(
+            painel,
+            f"Cinza=original  Vermelho=corrigido  Amarelo=deslocamento "
+            f"(theta={theta_frame:.1f} graus)",
+        )
+    else:
+        # Painel original: esqueleto cinza sobre o frame real
+        painel_orig = frame_bgr.copy()
+        _desenhar_esqueleto(painel_orig, keypoints_por_frame[idx], largura, altura, idx_pivo)
 
-    painel_orig = _adicionar_titulo(painel_orig, "Original")
-    painel_corr = _adicionar_titulo(painel_corr, f"Corrigido - theta={theta_frame:.1f} graus")
+        # Painel corrigido: esqueleto vermelho sobre fundo branco
+        painel_corr = np.full((altura, largura, 3), COR_FUNDO, dtype=np.uint8)
+        _desenhar_esqueleto(
+            painel_corr, corrigidos[idx], largura, altura, idx_pivo, cor=COR_VERMELHO
+        )
 
-    composicao = cv2.hconcat([painel_orig, painel_corr])
+        painel_orig = _adicionar_titulo(painel_orig, "Original")
+        painel_corr = _adicionar_titulo(
+            painel_corr, f"Corrigido - theta={theta_frame:.1f} graus"
+        )
+        composicao = cv2.hconcat([painel_orig, painel_corr])
+
     cv2.imwrite(args.output, composicao)
     print(
         f"Imagem salva em '{args.output}' "
