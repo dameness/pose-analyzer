@@ -12,6 +12,7 @@ from pipeline.perspective_corrector import (
     _aplicar_ema,
     corrigir_perspectiva,
     calcular_theta_medio,
+    estimar_thetas_por_frame,
     RATIO_LARGURA_OMBRO,
     RATIO_LARGURA_QUADRIL,
     THETA_MAXIMO,
@@ -385,3 +386,55 @@ class TestCalcularThetaMedio:
         frames = [None] * 10
         resultado = calcular_theta_medio(frames, "left")
         assert resultado == pytest.approx(0.0)
+
+
+# ---------------------------------------------------------------------------
+# Testes — estimar_thetas_por_frame
+# ---------------------------------------------------------------------------
+
+
+class TestEstimarThetasPorFrame:
+    def test_length_matches_input(self):
+        """Resultado tem o mesmo comprimento da entrada."""
+        frames = [_gerar_keypoints_base()] * 8
+        result = estimar_thetas_por_frame(frames, "left")
+        assert len(result) == 8
+
+    def test_none_frames_passthrough(self):
+        """Frames None viram None no resultado, preservando os índices."""
+        kp = _gerar_keypoints_base()
+        frames = [None, kp, None, kp]
+        result = estimar_thetas_por_frame(frames, "left")
+        assert result[0] is None
+        assert result[2] is None
+        assert result[1] is not None
+        assert result[3] is not None
+
+    def test_zero_rotation_near_zero(self):
+        """Sem rotação → todos os θ ≈ 0."""
+        frames = [_gerar_keypoints_base()] * 10
+        result = estimar_thetas_por_frame(frames, "left")
+        assert all(t == pytest.approx(0.0, abs=0.5) for t in result)
+
+    def test_rotation_positive_and_in_degrees(self):
+        """Com rotação moderada → θ positivo e em graus (abaixo do clamp)."""
+        kp = _gerar_keypoints_base()
+        kp[24] = _kp(x=0.5, y=0.6, z=-0.05)  # far hip com Z offset
+        frames = [kp] * 10
+        result = estimar_thetas_por_frame(frames, "left")
+        assert result[-1] > 0.0
+        assert result[-1] < 35.0
+
+    def test_clamped_to_max_degrees(self):
+        """ΔZ enorme → θ clampado a THETA_MAXIMO (35°)."""
+        kp = _gerar_keypoints_base()
+        kp[24] = _kp(x=0.5, y=0.6, z=-1.0)
+        frames = [kp] * 15
+        result = estimar_thetas_por_frame(frames, "left")
+        assert max(result) == pytest.approx(35.0, abs=0.5)
+
+    def test_all_none_returns_all_none(self):
+        """Todos frames None → lista de None do mesmo tamanho."""
+        frames = [None] * 5
+        result = estimar_thetas_por_frame(frames, "left")
+        assert result == [None] * 5

@@ -167,6 +167,39 @@ def calcular_theta_medio(
     return round(math.degrees(media), 2)
 
 
+def estimar_thetas_por_frame(
+    keypoints_por_frame: list[list[dict] | None],
+    side: str,
+) -> list[float | None]:
+    """
+    Retorna o θ (em graus) por frame, já suavizado por EMA e clampado a
+    THETA_MAXIMO — o mesmo θ que corrigir_perspectiva aplica em cada frame.
+
+    Frames None retornam None (passthrough), preservando o alinhamento de
+    índices com a lista de entrada. Útil para selecionar o frame de maior
+    rotação ao visualizar a correção.
+    """
+    thetas_raw = []
+    valid_indices = []
+    for i, keypoints in enumerate(keypoints_por_frame):
+        if keypoints is None:
+            continue
+        thetas_raw.append(_estimar_theta_frame(keypoints, side))
+        valid_indices.append(i)
+
+    if not thetas_raw:
+        return [None] * len(keypoints_por_frame)
+
+    thetas_smoothed = _aplicar_ema(thetas_raw)
+    thetas_clamped = [max(0.0, min(t, THETA_MAXIMO)) for t in thetas_smoothed]
+
+    theta_map = dict(zip(valid_indices, thetas_clamped))
+    return [
+        math.degrees(theta_map[i]) if i in theta_map else None
+        for i in range(len(keypoints_por_frame))
+    ]
+
+
 def corrigir_perspectiva(
     keypoints_por_frame: list[list[dict] | None],
     side: str,
